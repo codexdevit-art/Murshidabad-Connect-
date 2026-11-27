@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Murshidabad Connect — Admin Panel | Slstrms Technologies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green: #087F5B;
+      --green-dark: #064E3B;
+      --green-deep: #04392B;
+      --green-light: #E8F5EE;
+      --bg: #F5F8F6;
+      --surface: #FFFFFF;
+      --text: #17231E;
+      --text-muted: #6B7A72;
+      --border: #DCE6E0;
+      --danger: #DC2626;
+      --danger-bg: #FEF2F2;
+      --amber: #D97706;
+      --amber-bg: #FFFBEB;
+      --blue: #1D4ED8;
+      --blue-bg: #EFF6FF;
+      --radius: 14px;
+      --shadow: 0 4px 18px rgba(6, 78, 59, 0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Bengali', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    button, input, select, textarea { font-family: inherit; }
+
+    /* Auth / Access Denied Screen */
+    .center-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(155deg, var(--green-dark), var(--green) 55%, var(--bg) 55%);
+    }
+    .auth-card {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 36px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(6, 78, 59, 0.18);
+      text-align: center;
+    }
+    .brand-mark {
+      width: 68px; height: 68px; border-radius: 20px;
+      background: linear-gradient(135deg, var(--green), var(--green-dark));
+      color: #fff; display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 24px; margin-bottom: 16px;
+      box-shadow: 0 8px 20px rgba(8, 127, 91, 0.25);
+    }
+    .auth-card h1 { font-size: 24px; margin-bottom: 6px; }
+    .auth-card p { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+
+    /* Layout */
+    .app-shell { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 268px;
+      background: linear-gradient(180deg, var(--green-dark), var(--green-deep));
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 40;
+      transition: transform 0.25s ease;
+    }
+    .sidebar-header {
+      padding: 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .sidebar-logo {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(255,255,255,0.16);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px;
+    }
+    .sidebar-title { font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .sidebar-sub { font-size: 11px; opacity: 0.78; }
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px 24px;
+    }
+    .nav-group-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.55);
+      padding: 12px 12px 6px;
+      font-weight: 700;
+    }
+    .nav-item {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.84);
+      padding: 9px 12px;
+      border-radius: 10px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.10); color: #fff; }
+    .nav-item.active { background: var(--green); color: #fff; font-weight: 600; }
+    .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+    .main-area {
+      flex: 1;
+      margin-left: 268px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      position: sticky; top: 0; z-index: 25;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .menu-toggle {
+      display: none; border: 1px solid var(--border); background: var(--surface);
+      border-radius: 10px; padding: 8px 10px; cursor: pointer;
+    }
+    .topbar-user { display: flex; align-items: center; gap: 10px; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+      background: var(--green-light); color: var(--green-dark);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; border: 2px solid var(--green-light);
+    }
+    .content-wrap { padding: 24px; max-width: 1400px; width: 100%; margin: 0 auto; }
+
+    /* Cards & Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--green-dark); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+    .card-header {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px;
+    }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }
+
+    /* Buttons & Inputs */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 9px 16px; border-radius: 10px; border: 1px solid transparent;
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s, background 0.15s;
+    }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-dark); }
+    .btn-outline { background: var(--surface); border-color: var(--border); color: var(--text); }
+    .btn-outline:hover { background: var(--bg); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); border-color: #FECACA; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
+
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .input, .select, .textarea {
+      width: 100%; padding: 9px 12px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      font-size: 13px; outline: none;
+    }
+    .input:focus, .select:focus, .textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(8,127,91,0.12); }
+    .toolbar .input { max-width: 280px; }
+    .toolbar .select { max-width: 180px; }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+    th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); background: #FAFCFB; }
+    .badge {
+      display: inline-flex; align-items: center; padding: 3px 9px;
+      border-radius: 999px; font-size: 11px; font-weight: 700;
+    }
+    .badge-green { background: var(--green-light); color: var(--green-dark); }
+    .badge-red { background: var(--danger-bg); color: var(--danger); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); }
+    .badge-blue { background: var(--blue-bg); color: var(--blue); }
+
+    .thumb { width: 46px; height: 34px; border-radius: 8px; object-fit: cover; background: var(--green-light); }
+    .preview-box {
+      margin-top: 8px; border: 1px dashed var(--border); border-radius: 12px;
+      padding: 8px; background: var(--bg); text-align: center;
+    }
+    .preview-box img { max-height: 160px; max-width: 100%; border-radius: 8px; object-fit: cover; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(10, 25, 19, 0.55);
+      display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 60;
+    }
+    .modal {
+      background: var(--surface); border-radius: 20px; max-width: 640px; width: 100%;
+      max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .form-field label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 90;
+      background: var(--green-dark); color: #fff; padding: 12px 18px;
+      border-radius: 12px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.2);
+    }
+    .toast.error { background: var(--danger); }
+    .hidden { display: none !important; }
+
+    .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 12px; color: var(--text-muted); }
+    .chart-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+    .chart-bar-track { flex: 1; height: 10px; background: var(--green-light); border-radius: 99px; overflow: hidden; }
+    .chart-bar-fill { height: 100%; background: var(--green); border-radius: 99px; }
+
+    @media (max-width: 900px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-area { margin-left: 0; }
+      .menu-toggle { display: inline-flex; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Auth / Loading / Access Denied Container -->
+  <div id="authScreen" class="center-screen">
+    <div class="auth-card">
+      <div class="brand-mark">MC</div>
+      <h1>Murshidabad Connect</h1>
+      <p>Admin Panel &bull; Slstrms Technologies<br />Sign in with your authorized Google Admin or Manager account.</p>
+
+      <div id="configWarning" class="card hidden" style="text-align:left; background:var(--amber-bg); border-color:#FDE68A; font-size:12px;">
+        <strong>Firebase Web App ID needed:</strong> Paste your Firebase Web <code>appId</code> from Firebase Console &rarr; Project Settings &rarr; Your apps (Web) below to connect.
+        <div class="form-field" style="margin-top:8px; margin-bottom:8px;">
+          <input id="webAppIdInput" class="input" placeholder="1:886350848238:web:..." />
+        </div>
+        <button id="saveWebAppIdBtn" class="btn btn-primary btn-sm">Save Web App ID</button>
+      </div>
+
+      <div id="accessDeniedBox" class="card hidden" style="background:var(--danger-bg); border-color:#FECACA; text-align:left;">
+        <strong style="color:var(--danger); display:block; margin-bottom:4px;">ACCESS DENIED</strong>
+        <div id="deniedDetails" style="font-size:12px; color:var(--text);"></div>
+      </div>
+
+      <button id="googleLoginBtn" class="btn btn-primary" style="width:100%; padding:13px; font-size:15px;">
+        Continue with Google
+      </button>
+      <div id="authLoading" class="hidden" style="margin-top:12px; font-size:13px; color:var(--text-muted);">Verifying Google &amp; Firestore authorization...</div>
+      <div style="margin-top:16px; font-size:11px; color:var(--text-muted);">
+        Project: <code>gen-lang-client-0379959654</code> &bull; URL-Only Image System (No Storage)
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Admin Shell -->
+  <div id="adminShell" class="app-shell hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">MC</div>
+        <div>
+          <div class="sidebar-title">Murshidabad Connect</div>
+          <div class="sidebar-sub">Slstrms Technologies</div>
+        </div>
+      </div>
+      <nav id="sidebarNav" class="sidebar-nav"></nav>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="menuToggleBtn" class="menu-toggle" aria-label="Toggle Menu">&#9776;</button>
+          <div>
+            <div id="pageTitle" style="font-size:18px; font-weight:700;">Dashboard</div>
+            <div id="pageSubtitle" style="font-size:12px; color:var(--text-muted);">Live Cloud Firestore Administration</div>
+          </div>
+        </div>
+        <div class="topbar-user">
+          <span id="roleBadge" class="badge badge-green">ADMIN</span>
+          <img id="topUserAvatar" class="avatar hidden" alt="Admin DP" />
+          <div id="topUserInitial" class="avatar">A</div>
+          <div style="text-align:left;">
+            <div id="topUserName" style="font-size:13px; font-weight:700;">Admin</div>
+            <div id="topUserEmail" style="font-size:11px; color:var(--text-muted);"></div>
+          </div>
+        </div>
+      </header>
+
+      <main id="mainContent" class="content-wrap"></main>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="card-header" style="margin-bottom:12px;">
+        <h3 id="modalTitle" style="font-size:17px;">Form</h3>
+        <button id="modalCloseBtn" class="btn btn-outline btn-sm">Close</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
+      query, orderBy, limit, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
+
+    // =========================================================================
+    // FIREBASE CONFIGURATION (Same Firebase Project as Android User App)
+    // =========================================================================
+    // Obtain Web appId from: Firebase Console -> Project Settings -> Your apps -> Add Web App
+    const DEFAULT_WEB_APP_ID = "YOUR_FIREBASE_WEB_APP_ID";
+    const storedAppId = localStorage.getItem("mc_firebase_web_app_id");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDkJ0V59KCSUXKW-YPhmj08q0ShwwO7Yzo",
+      authDomain: "gen-lang-client-0379959654.firebaseapp.com",
+      projectId: "gen-lang-client-0379959654",
+      messagingSenderId: "886350848238",
+      appId: storedAppId || DEFAULT_WEB_APP_ID
+    };
+
+    const FIRESTORE_DATABASE_ID = "ai-studio-android-murshida-a77068e6-7c4a-4a53-be40-aa155ef83318";
+    const BOOTSTRAP_SUPER_ADMIN_EMAIL = "rjjejsjs29@gmail.com";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app, FIRESTORE_DATABASE_ID);
+    const provider = new GoogleAuthProvider();
+
+    if (firebaseConfig.appId === DEFAULT_WEB_APP_ID) {
+      document.getElementById("configWarning").classList.remove("hidden");
+    }
+    document.getElementById("saveWebAppIdBtn").addEventListener("click", () => {
+      const val = document.getElementById("webAppIdInput").value.trim();
+      if (!val.includes(":web:")) {
+        showToast("Enter a valid Firebase Web App ID (contains :web:)", true);
+        return;
+      }
+      localStorage.setItem("mc_firebase_web_app_id", val);
+      location.reload();
+    });
+
+    // =========================================================================
+    // STATE & UTILITIES
+    // =========================================================================
+    const state = {
+      user: null,
+      role: null, // SUPER_ADMIN | ADMIN | MANAGER | MODERATOR
+      permissions: {}, // moduleKey -> ['view', 'add', 'edit', 'delete', 'publish']
+      activePage: "dashboard",
+      cache: {},
+      pageNum: 1,
+      pageSize: 10,
+      search: "",
+      filter: "ALL"
+    };
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function safeUrl(url) {
+      const s = String(url ?? "").trim();
+      if (s.startsWith("https://") || s.startsWith("http://")) return s;
+      return "";
+    }
+
+    function formatDate(ts) {
+      if (!ts) return "-";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return isNaN(d.getTime()) ? "-" : d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    }
+
+    function showToast(msg, isError = false) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = "toast" + (isError ? " error" : "");
+      setTimeout(() => el.classList.add("hidden"), 3400);
+    }
+
+    function openModal(title, htmlContent, onMount) {
+      document.getElementById("modalTitle").textContent = title;
+      const body = document.getElementById("modalBody");
+      body.innerHTML = htmlContent;
+      document.getElementById("modalBackdrop").classList.remove("hidden");
+      if (onMount) onMount(body);
+    }
+
+    function closeModal() {
+      document.getElementById("modalBackdrop").classList.add("hidden");
+      document.getElementById("modalBody").innerHTML = "";
+    }
+    document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+
+    async function writeAudit(action, module, targetId, summary) {
+      if (!state.user) return;
+      try {
+        await addDoc(collection(db, "audit_logs"), {
+          actorUid: state.user.uid,
+          actorEmail: state.user.email || "",
+          action,
+          module,
+          targetId: String(targetId || ""),
+          summary: String(summary || "").slice(0, 480),
+          createdAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.warn("Audit log skipped:", e.message);
+      }
+    }
+
+    // =========================================================================
+    // SIDEBAR REGISTRY (All 32 Required Pages)
+    // =========================================================================
+    const NAV_GROUPS = [
+      {
+        label: "Overview",
+        items: [
+          { id: "dashboard", label: "1. Dashboard", module: "dashboard" },
+          { id: "analytics", label: "27. Analytics", module: "analytics" }
+        ]
+      },
+      {
+        label: "Citizens & Categories",
+        items: [
+          { id: "users", label: "2. User Management", module: "users" },
+          { id: "categories", label: "3. Dashboard Categories", module: "categories" }
+        ]
+      },
+      {
+        label: "Civic Content",
+        items: [
+          { id: "news", label: "4. News Management", module: "news", col: "news" },
+          { id: "jobs", label: "5. Job Management", module: "jobs", col: "jobs" },
+          { id: "education", label: "6. Education Management", module: "education", col: "education" },
+          { id: "scholarships", label: "7. Scholarship Management", module: "scholarships", col: "scholarships" },
+          { id: "healthcare", label: "8. Healthcare Management", module: "healthcare", col: "healthcare" },
+          { id: "businesses", label: "9. Business Directory", module: "businesses", col: "businesses" },
+          { id: "schemes", label: "10. Government Schemes", module: "schemes", col: "government_schemes" },
+          { id: "agriculture", label: "11. Agriculture Management", module: "agriculture", col: "agriculture" },
+          { id: "market_prices", label: "12. Market Prices", module: "market_prices", col: "market_prices" },
+          { id: "transport", label: "13. Transport Management", module: "transport", col: "transport" },
+          { id: "tourism", label: "14. Tourism Management", module: "tourism", col: "tourism" },
+          { id: "services", label: "19. Services Management", module: "services", col: "services" }
+        ]
+      },
+      {
+        label: "Community & Safety",
+        items: [
+          { id: "community", label: "15. Community Management", module: "community" },
+          { id: "lost_found", label: "16. Lost & Found", module: "lost_found" },
+          { id: "emergency", label: "17. Emergency Contacts", module: "emergency", col: "emergency_contacts" },
+          { id: "blood_donors", label: "18. Blood Donor Management", module: "blood_donors" },
+          { id: "reports", label: "26. Reports", module: "reports" }
+        ]
+      },
+      {
+        label: "Comms & Promotions",
+        items: [
+          { id: "announcements", label: "20. Announcements", module: "announcements", col: "announcements" },
+          { id: "notifications", label: "21. Notifications", module: "notifications" },
+          { id: "banners", label: "22. Banner Management", module: "banners", col: "banners" },
+          { id: "ads", label: "23. Advertisement Mgmt", module: "ads", col: "advertisements" },
+          { id: "app_updates", label: "24. App Updates", module: "app_updates" }
+        ]
+      },
+      {
+        label: "Administration",
+        items: [
+          { id: "managers", label: "25. Manager Management", module: "managers", superOnly: true },
+          { id: "admin_profile", label: "28. Admin Profile", module: "profile" },
+          { id: "system_settings", label: "29. System Settings", module: "settings", superOnly: true },
+          { id: "security_settings", label: "30. Security Settings", module: "security", superOnly: true },
+          { id: "audit_logs", label: "31. Audit Logs", module: "audit", adminOnly: true },
+          { id: "logout", label: "32. Logout", module: "logout" }
+        ]
+      }
+    ];
+
+    function hasPerm(moduleKey, action = "view") {
+      if (state.role === "SUPER_ADMIN" || state.role === "ADMIN") return true;
+      if (moduleKey === "dashboard" || moduleKey === "profile" || moduleKey === "logout" || moduleKey === "analytics") return true;
+      const list = state.permissions[moduleKey];
+      return Array.isArray(list) && list.includes(action);
+    }
+
+    function canSeeNavItem(item) {
+      if (item.superOnly) return state.role === "SUPER_ADMIN";
+      if (item.adminOnly) return state.role === "SUPER_ADMIN" || state.role === "ADMIN";
+      return hasPerm(item.module, "view");
+    }
+
+    // =========================================================================
+    // GOOGLE AUTHENTICATION & SERVER-ENFORCED ALLOWLIST CHECK
+    // =========================================================================
+    document.getElementById("googleLoginBtn").addEventListener("click", async () => {
+      document.getElementById("authLoading").classList.remove("hidden");
+      document.getElementById("accessDeniedBox").classList.add("hidden");
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        document.getElementById("authLoading").classList.add("hidden");
+        showToast(e.message || "Google sign-in failed", true);
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        state.user = null;
+        state.role = null;
+        document.getElementById("authScreen").classList.remove("hidden");
+        document.getElementById("adminShell").classList.add("hidden");
+        document.getElementById("authLoading").classList.add("hidden");
+        return;
+      }
+
+      document.getElementById("authLoading").classList.remove("hidden");
+      try {
+        let resolvedRole = null;
+        let resolvedPerms = {};
+
+        // 1. Check admins/{uid}
+        const adminSnap = await getDoc(doc(db, "admins", user.uid));
+        if (adminSnap.exists() && adminSnap.data().status === "ACTIVE") {
+          resolvedRole = adminSnap.data().role;
+        } else if (user.emailVerified && user.email === BOOTSTRAP_SUPER_ADMIN_EMAIL) {
+          resolvedRole = "SUPER_ADMIN";
+          await setDoc(doc(db, "admins", user.uid), {
+            uid: user.uid,
+            email: user.email,
+            name: user.displayName || "Super Admin",
+            photoUrl: user.photoURL || "",
+            role: "SUPER_ADMIN",
+            status: "ACTIVE",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          }, { merge: true }).catch(() => {});
+        } else {
+          // 2. Check managers/{uid}
+          const mgrSnap = await getDoc(doc(db, "managers", user.uid));
+          if (mgrSnap.exists() && mgrSnap.data().status === "ACTIVE") {
+            resolvedRole = mgrSnap.data().role || "MANAGER";
+            resolvedPerms = mgrSnap.data().permissions || {};
+          }
+        }
+
+        if (!resolvedRole) {
+          document.getElementById("authLoading").classList.add("hidden");
+          const deniedBox = document.getElementById("accessDeniedBox");
+          deniedBox.classList.remove("hidden");
+          document.getElementById("deniedDetails").innerHTML =
+            `Account <b>${escapeHtml(user.email)}</b> (UID: <code>${escapeHtml(user.uid)}</code>) is not authorized as an Admin or Manager.<br/>Ask your Super Admin to add this UID to <code>admins</code> or <code>managers</code>.`;
+          await signOut(auth);
+          return;
+        }
+
+        state.user = user;
+        state.role = resolvedRole;
+        state.permissions = resolvedPerms;
+        hydrateHeaderUser(user, resolvedRole);
+        renderSidebar();
+        document.getElementById("authScreen").classList.add("hidden");
+        document.getElementById("adminShell").classList.remove("hidden");
+        navigateTo("dashboard");
+      } catch (err) {
+        document.getElementById("authLoading").classList.add("hidden");
+        showToast(err.message || "Authorization check failed", true);
+      }
+    });
+
+    function hydrateHeaderUser(user, role) {
+      document.getElementById("roleBadge").textContent = role;
+      document.getElementById("topUserName").textContent = user.displayName || "Admin";
+      document.getElementById("topUserEmail").textContent = user.email || "";
+      const img = document.getElementById("topUserAvatar");
+      const init = document.getElementById("topUserInitial");
+      const url = safeUrl(user.photoURL);
+      if (url) {
+        img.src = url;
+        img.classList.remove("hidden");
+        init.classList.add("hidden");
+        img.onerror = () => { img.classList.add("hidden"); init.classList.remove("hidden"); };
+      } else {
+        init.textContent = (user.displayName || "A")[0].toUpperCase();
+        img.classList.add("hidden");
+        init.classList.remove("hidden");
+      }
+    }
+
+    // =========================================================================
+    // NAVIGATION
+    // =========================================================================
+    document.getElementById("menuToggleBtn").addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("open");
+    });
+
+    function renderSidebar() {
+      const nav = document.getElementById("sidebarNav");
+      nav.innerHTML = "";
+      NAV_GROUPS.forEach((group) => {
+        const visibleItems = group.items.filter(canSeeNavItem);
+        if (visibleItems.length === 0) return;
+        const lbl = document.createElement("div");
+        lbl.className = "nav-group-label";
+        lbl.textContent = group.label;
+        nav.appendChild(lbl);
+
+        visibleItems.forEach((item) => {
+          const btn = document.createElement("button");
+          btn.className = "nav-item" + (state.activePage === item.id ? " active" : "");
+          btn.dataset.page = item.id;
+          btn.textContent = item.label;
+          btn.addEventListener("click", () => {
+            document.getElementById("sidebar").classList.remove("open");
+            if (item.id === "logout") {
+              if (confirm("Sign out from Murshidabad Connect Admin Panel?")) {
+                signOut(auth);
+              }
+              return;
+            }
+            navigateTo(item.id);
+          });
+          nav.appendChild(btn);
+        });
+      });
+    }
+
+    async function navigateTo(pageId) {
+      state.activePage = pageId;
+      state.pageNum = 1;
+      state.search = "";
+      state.filter = "ALL";
+      document.querySelectorAll(".nav-item").forEach((el) => {
+        el.classList.toggle("active", el.dataset.page === pageId);
+      });
+      const navEntry = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.id === pageId);
+      document.getElementById("pageTitle").textContent = navEntry ? navEntry.label.replace(/^\d+\.\s*/, "") : "Dashboard";
+
+      const main = document.getElementById("mainContent");
+      main.innerHTML = `<div class="card">Loading Firestore data...</div>`;
+
+      if (pageId === "dashboard") return renderDashboard();
+      if (pageId === "analytics") return renderAnalytics();
+      if (pageId === "users") return renderUsersPage();
+      if (pageId === "categories") return renderCategoriesPage();
+      if (pageId === "community") return renderCommunityPage();
+      if (pageId === "lost_found") return renderLostFoundPage();
+      if (pageId === "blood_donors") return renderBloodDonorsPage();
+      if (pageId === "notifications") return renderNotificationsPage();
+      if (pageId === "app_updates") return renderAppUpdatesPage();
+      if (pageId === "managers") return renderManagersPage();
+      if (pageId === "reports") return renderReportsPage();
+      if (pageId === "admin_profile") return renderAdminProfilePage();
+      if (pageId === "system_settings") return renderSystemSettingsPage();
+      if (pageId === "security_settings") return renderSecuritySettingsPage();
+      if (pageId === "audit_logs") return renderAuditLogsPage();
+      if (navEntry && navEntry.col) return renderContentCrudPage(navEntry);
+    }
+
+    async function fetchCol(colName, orderField = "createdAt") {
+      try {
+        const snap = await getDocs(query(collection(db, colName), orderBy(orderField, "desc"), limit(200)));
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      } catch (_) {
+        const snap = await getDocs(query(collection(db, colName), limit(200)));
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
+    }
+
+    // =========================================================================
+    // 1. DASHBOARD (Real Firestore Statistics & Growth Chart)
+    // =========================================================================
+    async function renderDashboard() {
+      const [users, news, jobs, businesses, services, posts, reports] = await Promise.all([
+        hasPerm("users", "view") ? fetchCol("users") : Promise.resolve([]),
+        fetchCol("news"),
+        fetchCol("jobs"),
+        fetchCol("businesses"),
+        fetchCol("services"),
+        fetchCol("community_posts"),
+        hasPerm("reports", "view") ? fetchCol("reports") : Promise.resolve([])
+      ]);
+
+      const activeUsers = users.filter((u) => u.status === "ACTIVE").length;
+      const suspendedUsers = users.filter((u) => u.status === "SUSPENDED").length;
+      const pendingReports = reports.filter((r) => r.status === "PENDING").length;
+
+      // Real monthly growth buckets from user createdAt
+      const monthCounts = {};
+      users.forEach((u) => {
+        const d = u.createdAt?.toDate ? u.createdAt.toDate() : null;
+        if (d) {
+          const key = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+          monthCounts[key] = (monthCounts[key] || 0) + 1;
+        }
+      });
+      const chartEntries = Object.entries(monthCounts).slice(-6);
+      const maxBucket = Math.max(1, ...chartEntries.map((e) => e[1]));
+
+      const main = document.getElementById("mainContent");
+      main.innerHTML = `
+        <div class="card" style="background:linear-gradient(120deg, var(--green-dark), var(--green)); color:#fff;">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 style="font-size:20px; margin-bottom:4px;">Welcome back, ${escapeHtml(state.user.displayName || "Admin")}</h2>
+              <div style="font-size:13px; opacity:0.9;">Role: ${escapeHtml(state.role)} &bull; Database: <code>${escapeHtml(FIRESTORE_DATABASE_ID)}</code></div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="window._mcNav('news')">+ News</button>
+              <button class="btn btn-outline btn-sm" onclick="window._mcNav('jobs')">+ Job</button>
+              <button class="btn btn-outline btn-sm" onclick="window._mcNav('announcements')">+ Announcement</button>
+              <button class="btn btn-outline btn-sm" onclick="window._mcNav('notifications')">+ Alert</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value">${users.length}</div></div>
+          <div class="stat-card"><div class="stat-label">Active Users</div><div class="stat-value">${activeUsers}</div></div>
+          <div class="stat-card"><div class="stat-label">Suspended Users</div><div class="stat-value" style="color:var(--danger);">${suspendedUsers}</div></div>
+          <div class="stat-card"><div class="stat-label">Total News</div><div class="stat-value">${news.length}</div></div>
+          <div class="stat-card"><div class="stat-label">Total Jobs</div><div class="stat-value">${jobs.length}</div></div>
+          <div class="stat-card"><div class="stat-label">Total Businesses</div><div class="stat-value">${businesses.length}</div></div>
+          <div class="stat-card"><div class="stat-label">Total Services</div><div class="stat-value">${services.length}</div></div>
+          <div class="stat-card"><div class="stat-label">Community Posts</div><div class="stat-value">${posts.length}</div></div>
+          <div class="stat-card"><div class="stat-label">Pending Reports</div><div class="stat-value" style="color:var(--amber);">${pendingReports}</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="font-size:15px; margin-bottom:12px;">User Growth (Live Firestore)</h3>
+            ${chartEntries.length === 0 ? `<div style="color:var(--text-muted); font-size:13px;">No registrations recorded yet.</div>` :
+              chartEntries.map(([label, count]) => `
+                <div class="chart-bar-row">
+                  <span style="width:65px;">${escapeHtml(label)}</span>
+                  <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${Math.round((count / maxBucket) * 100)}%"></div></div>
+                  <strong>${count}</strong>
+                </div>
+              `).join("")}
+          </div>
+          <div class="card">
+            <h3 style="font-size:15px; margin-bottom:12px;">System Status</h3>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+              <div><span class="badge badge-green">ONLINE</span> Cloud Firestore Connected</div>
+              <div><span class="badge badge-green">VERIFIED</span> Google Authentication Active</div>
+              <div><span class="badge badge-blue">URL-ONLY</span> Zero Storage Binary Uploads Enforced</div>
+              <div><span class="badge badge-green">READY</span> FCM Token Sync Enabled on Android</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 style="font-size:15px; margin-bottom:10px;">Recent Registrations</h3>
+            ${users.slice(0, 5).map((u) => `
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
+                <div><strong>${escapeHtml(u.name)}</strong><div style="font-size:11px; color:var(--text-muted);">${escapeHtml(u.email)} &bull; ${escapeHtml(u.block || "Murshidabad")}</div></div>
+                <span class="badge ${u.status === "ACTIVE" ? "badge-green" : "badge-red"}">${escapeHtml(u.status)}</span>
+              </div>
+            `).join("") || `<div style="font-size:13px; color:var(--text-muted);">No users yet.</div>`}
+          </div>
+          <div class="card">
+            <h3 style="font-size:15px; margin-bottom:10px;">Recent Content</h3>
+            ${[...news.slice(0, 3), ...jobs.slice(0, 2)].map((c) => `
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
+                <div><strong>${escapeHtml(c.title)}</strong><div style="font-size:11px; color:var(--text-muted);">${escapeHtml(c.category)}</div></div>
+                <span class="badge ${c.isPublished ? "badge-green" : "badge-amber"}">${c.isPublished ? "Published" : "Draft"}</span>
+              </div>
+            `).join("") || `<div style="font-size:13px; color:var(--text-muted);">No content published yet.</div>`}
+          </div>
+        </div>
+      `;
+    }
+    window._mcNav = navigateTo;
+
+    // =========================================================================
+    // 2. USER MANAGEMENT
+    // =========================================================================
+    async function renderUsersPage() {
+      const rows = await fetchCol("users");
+      state.cache.users = rows;
+      drawUsersTable();
+    }
+
+    function drawUsersTable() {
+      const rows = (state.cache.users || []).filter((u) => {
+        const s = state.search.toLowerCase();
+        const matchSearch = !s || (u.name || "").toLowerCase().includes(s) || (u.email || "").toLowerCase().includes(s) || (u.block || "").toLowerCase().includes(s);
+        const matchFilter = state.filter === "ALL" || u.status === state.filter;
+        return matchSearch && matchFilter;
+      });
+      const start = (state.pageNum - 1) * state.pageSize;
+      const paged = rows.slice(start, start + state.pageSize);
+
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="toolbar">
+            <input id="usrSearch" class="input" placeholder="Search name, email, block..." value="${escapeHtml(state.search)}" />
+            <select id="usrFilter" class="select">
+              <option value="ALL" ${state.filter === "ALL" ? "selected" : ""}>All Status</option>
+              <option value="ACTIVE" ${state.filter === "ACTIVE" ? "selected" : ""}>ACTIVE</option>
+              <option value="SUSPENDED" ${state.filter === "SUSPENDED" ? "selected" : ""}>SUSPENDED</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Avatar</th><th>Name / Email</th><th>UID</th><th>Location</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                ${paged.map((u) => {
+                  const photo = safeUrl(u.photoUrl);
+                  return `
+                    <tr>
+                      <td>${photo ? `<img class="avatar" src="${escapeHtml(photo)}" onerror="this.style.display='none'" />` : `<div class="avatar">${escapeHtml((u.name || "U")[0])}</div>`}</td>
+                      <td><strong>${escapeHtml(u.name)}</strong><div style="font-size:11px;color:var(--text-muted);">${escapeHtml(u.email)}</div>${u.mobile ? `<div style="font-size:11px;">${escapeHtml(u.mobile)}</div>` : ""}</td>
+                      <td><code style="font-size:11px;">${escapeHtml((u.uid || u.id).slice(0, 10))}...</code></td>
+                      <td>${escapeHtml(u.village || "-")}, ${escapeHtml(u.block || "-")}</td>
+                      <td><span class="badge badge-blue">${escapeHtml(u.role)}</span></td>
+                      <td><span class="badge ${u.status === "ACTIVE" ? "badge-green" : "badge-red"}">${escapeHtml(u.status)}</span></td>
+                      <td>${formatDate(u.createdAt)}</td>
+                      <td style="white-space:nowrap;">
+                        ${hasPerm("users", "edit") ? `
+                          <button class="btn btn-outline btn-sm" data-act="edit" data-id="${escapeHtml(u.id)}">Edit</button>
+                          <button class="btn btn-outline btn-sm" data-act="toggle" data-id="${escapeHtml(u.id)}">${u.status === "ACTIVE" ? "Suspend" : "Activate"}</button>
+                        ` : ""}
+                        ${hasPerm("users", "delete") ? `<button class="btn btn-danger btn-sm" data-act="del" data-id="${escapeHtml(u.id)}">Delete</button>` : ""}
+                      </td>
+                    </tr>
+                  `;
+                }).join("") || `<tr><td colspan="8">No matching users.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+          ${renderPagination(rows.length, drawUsersTable)}
+        </div>
+      `;
+
+      document.getElementById("usrSearch").addEventListener("input", (e) => { state.search = e.target.value; state.pageNum = 1; drawUsersTable(); });
+      document.getElementById("usrFilter").addEventListener("change", (e) => { state.filter = e.target.value; state.pageNum = 1; drawUsersTable(); });
+      document.querySelectorAll("[data-act]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const u = state.cache.users.find((x) => x.id === btn.dataset.id);
+          if (!u) return;
+          if (btn.dataset.act === "toggle") {
+            const nextStatus = u.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+            await updateDoc(doc(db, "users", u.id), { status: nextStatus, updatedAt: serverTimestamp() });
+            await writeAudit("USER_STATUS", "users", u.id, `Set status to ${nextStatus}`);
+            showToast(`User ${nextStatus}`);
+            renderUsersPage();
+          } else if (btn.dataset.act === "edit") {
+            openModal("Edit User Profile", `
+              <form id="editUserForm">
+                <div class="form-field"><label>Full Name</label><input class="input" name="name" value="${escapeHtml(u.name)}" required /></div>
+                <div class="form-grid">
+                  <div class="form-field"><label>Block</label><input class="input" name="block" value="${escapeHtml(u.block || "")}" /></div>
+                  <div class="form-field"><label>Village</label><input class="input" name="village" value="${escapeHtml(u.village || "")}" /></div>
+                </div>
+                <div class="form-field"><label>Mobile</label><input class="input" name="mobile" value="${escapeHtml(u.mobile || "")}" /></div>
+                <div class="modal-actions"><button type="submit" class="btn btn-primary">Save</button></div>
+              </form>
+            `, (body) => {
+              body.querySelector("#editUserForm").addEventListener("submit", async (ev) => {
+                ev.preventDefault();
+                const fd = new FormData(ev.target);
+                await updateDoc(doc(db, "users", u.id), {
+                  name: fd.get("name"),
+                  block: fd.get("block"),
+                  village: fd.get("village"),
+                  mobile: fd.get("mobile"),
+                  updatedAt: serverTimestamp()
+                });
+                await writeAudit("USER_EDIT", "users", u.id, `Updated user ${fd.get("name")}`);
+                closeModal(); showToast("User updated"); renderUsersPage();
+              });
+            });
+          } else if (btn.dataset.act === "del") {
+            if (!confirm(`Delete user ${u.email}?`)) return;
+            await deleteDoc(doc(db, "users", u.id));
+            await writeAudit("USER_DELETE", "users", u.id, `Deleted user ${u.email}`);
+            showToast("User deleted"); renderUsersPage();
+          }
+        });
+      });
+    }
+
+    // =========================================================================
+    // 3. DASHBOARD CATEGORIES
+    // =========================================================================
+    async function renderCategoriesPage() {
+      const rows = await fetchCol("dashboard_categories", "displayOrder");
+      rows.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      state.cache.categories = rows;
+
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div><h3>Citizen Dashboard Categories</h3><div style="font-size:12px;color:var(--text-muted);">URL-only Icon &amp; Banner URLs. Reorder, enable or disable categories.</div></div>
+            <div style="display:flex; gap:8px;">
+              ${rows.length === 0 && hasPerm("categories", "add") ? `<button id="seedCatsBtn" class="btn btn-outline">Seed 7 Default Categories</button>` : ""}
+              ${hasPerm("categories", "add") ? `<button id="addCatBtn" class="btn btn-primary">+ Add Category</button>` : ""}
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Order</th><th>Icon</th><th>Slug</th><th>Bengali</th><th>English</th><th>Status</th><th>Visible</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${rows.map((c) => `
+                  <tr>
+                    <td>${escapeHtml(c.displayOrder)}</td>
+                    <td>${safeUrl(c.iconUrl) ? `<img class="thumb" src="${escapeHtml(safeUrl(c.iconUrl))}" />` : "-"}</td>
+                    <td><code>${escapeHtml(c.slug)}</code></td>
+                    <td>${escapeHtml(c.bengaliName)}</td>
+                    <td>${escapeHtml(c.englishName)}</td>
+                    <td><span class="badge ${c.status === "ACTIVE" ? "badge-green" : "badge-red"}">${escapeHtml(c.status)}</span></td>
+                    <td><span class="badge ${c.isPublished ? "badge-green" : "badge-amber"}">${c.isPublished ? "Visible" : "Hidden"}</span></td>
+                    <td>
+                      ${hasPerm("categories", "edit") ? `<button class="btn btn-outline btn-sm" data-cedit="${escapeHtml(c.id)}">Edit</button>` : ""}
+                      ${hasPerm("categories", "delete") ? `<button class="btn btn-danger btn-sm" data-cdel="${escapeHtml(c.id)}">Delete</button>` : ""}
+                    </td>
+                  </tr>
+                `).join("") || `<tr><td colspan="8">No categories in Firestore yet.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("seedCatsBtn")?.addEventListener("click", async () => {
+        const defaults = [
+          { slug: "student", title: "Student", bengaliName: "ছাত্র", englishName: "Student", hindiName: "छात्र", displayOrder: 1 },
+          { slug: "farmer", title: "Farmer", bengaliName: "কৃষক", englishName: "Farmer", hindiName: "किसान", displayOrder: 2 },
+          { slug: "job_seeker", title: "Job Seeker", bengaliName: "চাকরিপ্রার্থী", englishName: "Job Seeker", hindiName: "नौकरी चाहने वाले", displayOrder: 3 },
+          { slug: "business", title: "Business Owner", bengaliName: "ব্যবসায়ী", englishName: "Business Owner", hindiName: "व्यापारी", displayOrder: 4 },
+          { slug: "women", title: "Women", bengaliName: "মহিলা", englishName: "Women", hindiName: "महिला", displayOrder: 5 },
+          { slug: "senior", title: "Senior Citizen", bengaliName: "বয়স্ক নাগরিক", englishName: "Senior Citizen", hindiName: "वरिष्ठ नागरिक", displayOrder: 6 },
+          { slug: "general", title: "General Citizen", bengaliName: "সাধারণ নাগরিক", englishName: "General Citizen", hindiName: "आम नागरिक", displayOrder: 7 }
+        ];
+        for (const d of defaults) {
+          await setDoc(doc(db, "dashboard_categories", d.slug), {
+            ...d, description: "", iconUrl: "", bannerUrl: "", imageUrl: "",
+            isPublished: true, status: "ACTIVE", createdBy: state.user.uid,
+            createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+          });
+        }
+        await writeAudit("SEED_CATEGORIES", "categories", "all", "Seeded 7 default categories");
+        showToast("Default categories seeded"); renderCategoriesPage();
+      });
+
+      document.getElementById("addCatBtn")?.addEventListener("click", () => openCategoryModal(null));
+      document.querySelectorAll("[data-cedit]").forEach((b) => b.addEventListener("click", () => openCategoryModal(rows.find((r) => r.id === b.dataset.cedit))));
+      document.querySelectorAll("[data-cdel]").forEach((b) => b.addEventListener("click", async () => {
+        if (!confirm("Delete this category?")) return;
+        await deleteDoc(doc(db, "dashboard_categories", b.dataset.cdel));
+        await writeAudit("DELETE_CATEGORY", "categories", b.dataset.cdel, "Deleted dashboard category");
+        showToast("Deleted"); renderCategoriesPage();
+      }));
+    }
+
+    function openCategoryModal(cat) {
+      openModal(cat ? "Edit Dashboard Category" : "Add Dashboard Category", `
+        <form id="catForm">
+          <div class="form-grid">
+            <div class="form-field"><label>Slug (a-z0-9_)</label><input class="input" name="slug" value="${escapeHtml(cat?.slug || "")}" ${cat ? "readonly" : "required"} /></div>
+            <div class="form-field"><label>Display Order</label><input class="input" type="number" name="displayOrder" value="${escapeHtml(cat?.displayOrder ?? 1)}" required /></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-field"><label>Bengali Name</label><input class="input" name="bengaliName" value="${escapeHtml(cat?.bengaliName || "")}" required /></div>
+            <div class="form-field"><label>English Name</label><input class="input" name="englishName" value="${escapeHtml(cat?.englishName || "")}" required /></div>
+          </div>
+          <div class="form-field"><label>Hindi Name</label><input class="input" name="hindiName" value="${escapeHtml(cat?.hindiName || "")}" /></div>
+          <div class="form-field"><label>Description</label><textarea class="textarea" name="description">${escapeHtml(cat?.description || "")}</textarea></div>
+          ${urlInputHtml("Icon URL (https://...)", "iconUrl", cat?.iconUrl || "")}
+          ${urlInputHtml("Banner URL (https://...)", "bannerUrl", cat?.bannerUrl || "")}
+          <div class="form-grid">
+            <div class="form-field"><label>Status</label><select class="select" name="status"><option value="ACTIVE" ${cat?.status !== "INACTIVE" ? "selected" : ""}>ACTIVE</option><option value="INACTIVE" ${cat?.status === "INACTIVE" ? "selected" : ""}>INACTIVE</option></select></div>
+            <div class="form-field"><label>Visibility</label><select class="select" name="isPublished"><option value="true" ${cat?.isPublished !== false ? "selected" : ""}>Visible</option><option value="false" ${cat?.isPublished === false ? "selected" : ""}>Hidden</option></select></div>
+          </div>
+          <div class="modal-actions"><button type="submit" class="btn btn-primary">Save Category</button></div>
+        </form>
+      `, (body) => {
+        bindUrlPreviews(body);
+        body.querySelector("#catForm").addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+          const fd = new FormData(ev.target);
+          const slug = String(fd.get("slug")).trim().toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+          const payload = {
+            slug,
+            title: String(fd.get("englishName")).trim(),
+            bengaliName: String(fd.get("bengaliName")).trim(),
+            englishName: String(fd.get("englishName")).trim(),
+            hindiName: String(fd.get("hindiName") || "").trim(),
+            description: String(fd.get("description") || "").trim(),
+            iconUrl: String(fd.get("iconUrl") || "").trim(),
+            bannerUrl: String(fd.get("bannerUrl") || "").trim(),
+            imageUrl: String(fd.get("bannerUrl") || "").trim(),
+            displayOrder: parseInt(fd.get("displayOrder"), 10) || 0,
+            status: fd.get("status"),
+            isPublished: fd.get("isPublished") === "true",
+            updatedAt: serverTimestamp()
+          };
+          if (cat) {
+            await updateDoc(doc(db, "dashboard_categories", cat.id), payload);
+            await writeAudit("EDIT_CATEGORY", "categories", cat.id, payload.englishName);
+          } else {
+            await setDoc(doc(db, "dashboard_categories", slug), { ...payload, createdBy: state.user.uid, createdAt: serverTimestamp() });
+            await writeAudit("ADD_CATEGORY", "categories", slug, payload.englishName);
+          }
+          closeModal(); showToast("Category saved"); renderCategoriesPage();
+        });
+      });
+    }
+
+    // =========================================================================
+    // GENERIC CONTENT CRUD (Pages 4-14, 17, 19, 20, 22, 23)
+    // =========================================================================
+    async function renderContentCrudPage(navEntry) {
+      const rows = await fetchCol(navEntry.col);
+      state.cache[navEntry.col] = rows;
+      drawContentTable(navEntry);
+    }
+
+    function drawContentTable(navEntry) {
+      const col = navEntry.col;
+      const mod = navEntry.module;
+      const rows = (state.cache[col] || []).filter((r) => {
+        const s = state.search.toLowerCase();
+        const mSearch = !s || (r.title || "").toLowerCase().includes(s) || (r.category || "").toLowerCase().includes(s) || (r.location || "").toLowerCase().includes(s);
+        const mFilter = state.filter === "ALL" || (state.filter === "PUBLISHED" ? r.isPublished : !r.isPublished);
+        return mSearch && mFilter;
+      });
+      const start = (state.pageNum - 1) * state.pageSize;
+      const paged = rows.slice(start, start + state.pageSize);
+
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div class="toolbar" style="margin:0;">
+              <input id="cntSearch" class="input" placeholder="Search title, category, location..." value="${escapeHtml(state.search)}" />
+              <select id="cntFilter" class="select">
+                <option value="ALL" ${state.filter === "ALL" ? "selected" : ""}>All</option>
+                <option value="PUBLISHED" ${state.filter === "PUBLISHED" ? "selected" : ""}>Published</option>
+                <option value="DRAFT" ${state.filter === "DRAFT" ? "selected" : ""}>Unpublished</option>
+              </select>
+            </div>
+            ${hasPerm(mod, "add") ? `<button id="addCntBtn" class="btn btn-primary">+ Add Item</button>` : ""}
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Image</th><th>Title</th><th>Category</th><th>Location / Meta</th><th>Status</th><th>Published</th><th>Created</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${paged.map((r) => {
+                  const img = safeUrl(r.imageUrl);
+                  return `
+                    <tr>
+                      <td>${img ? `<img class="thumb" src="${escapeHtml(img)}" onerror="this.style.display='none'" />` : `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);">No URL</div>`}</td>
+                      <td><strong>${escapeHtml(r.title)}</strong><div style="font-size:11px;color:var(--text-muted);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.description)}</div></td>
+                      <td><span class="badge badge-blue">${escapeHtml(r.category)}</span></td>
+                      <td style="font-size:12px;">${escapeHtml(r.location || r.block || "-")}<div>${escapeHtml(r.metaPrimary || "")}</div></td>
+                      <td><span class="badge ${r.status === "ACTIVE" ? "badge-green" : "badge-red"}">${escapeHtml(r.status)}</span></td>
+                      <td><span class="badge ${r.isPublished ? "badge-green" : "badge-amber"}">${r.isPublished ? "Yes" : "No"}</span></td>
+                      <td>${formatDate(r.createdAt)}</td>
+                      <td style="white-space:nowrap;">
+                        ${hasPerm(mod, "edit") ? `<button class="btn btn-outline btn-sm" data-edit="${escapeHtml(r.id)}">Edit</button>` : ""}
+                        ${hasPerm(mod, "publish") ? `<button class="btn btn-outline btn-sm" data-pub="${escapeHtml(r.id)}">${r.isPublished ? "Unpublish" : "Publish"}</button>` : ""}
+                        ${hasPerm(mod, "delete") ? `<button class="btn btn-danger btn-sm" data-del="${escapeHtml(r.id)}">Delete</button>` : ""}
+                      </td>
+                    </tr>
+                  `;
+                }).join("") || `<tr><td colspan="8">No items found in <code>${escapeHtml(col)}</code>.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+          ${renderPagination(rows.length, () => drawContentTable(navEntry))}
+        </div>
+      `;
+
+      document.getElementById("cntSearch").addEventListener("input", (e) => { state.search = e.target.value; state.pageNum = 1; drawContentTable(navEntry); });
+      document.getElementById("cntFilter").addEventListener("change", (e) => { state.filter = e.target.value; state.pageNum = 1; drawContentTable(navEntry); });
+      document.getElementById("addCntBtn")?.addEventListener("click", () => openContentModal(navEntry, null));
+      document.querySelectorAll("[data-edit]").forEach((b) => b.addEventListener("click", () => openContentModal(navEntry, state.cache[col].find((x) => x.id === b.dataset.edit))));
+      document.querySelectorAll("[data-pub]").forEach((b) => b.addEventListener("click", async () => {
+        const item = state.cache[col].find((x) => x.id === b.dataset.pub);
+        if (!item) return;
+        await updateDoc(doc(db, col, item.id), { isPublished: !item.isPublished, updatedAt: serverTimestamp() });
+        await writeAudit("TOGGLE_PUBLISH", mod, item.id, `${!item.isPublished ? "Published" : "Unpublished"} ${item.title}`);
+        showToast("Updated visibility"); renderContentCrudPage(navEntry);
+      }));
+      document.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+        if (!confirm("Delete this item permanently?")) return;
+        await deleteDoc(doc(db, col, b.dataset.del));
+        await writeAudit("DELETE", mod, b.dataset.del, `Deleted item from ${col}`);
+        showToast("Deleted"); renderContentCrudPage(navEntry);
+      }));
+    }
+
+    function openContentModal(navEntry, item) {
+      openModal(item ? `Edit ${navEntry.label}` : `Add ${navEntry.label}`, `
+        <form id="cntForm">
+          <div class="form-field"><label>Title</label><input class="input" name="title" value="${escapeHtml(item?.title || "")}" required /></div>
+          <div class="form-grid">
+            <div class="form-field"><label>Category</label><input class="input" name="category" value="${escapeHtml(item?.category || "General")}" required /></div>
+            <div class="form-field"><label>Block / Sub-category</label><input class="input" name="block" value="${escapeHtml(item?.block || "")}" /></div>
+          </div>
+          <div class="form-field"><label>Description</label><textarea class="textarea" rows="4" name="description">${escapeHtml(item?.description || "")}</textarea></div>
+          ${urlInputHtml("Image URL (https://... URL Only - No Upload)", "imageUrl", item?.imageUrl || "")}
+          <div class="form-grid">
+            <div class="form-field"><label>Location</label><input class="input" name="location" value="${escapeHtml(item?.location || "")}" /></div>
+            <div class="form-field"><label>Contact / Phone</label><input class="input" name="contact" value="${escapeHtml(item?.contact || "")}" /></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-field"><label>Action / Apply Link (URL)</label><input class="input" name="actionUrl" value="${escapeHtml(item?.actionUrl || "")}" placeholder="https://..." /></div>
+            <div class="form-field"><label>Badge Text</label><input class="input" name="badgeText" value="${escapeHtml(item?.badgeText || "")}" /></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-field"><label>Meta Primary (Salary / Price / Benefit)</label><input class="input" name="metaPrimary" value="${escapeHtml(item?.metaPrimary || "")}" /></div>
+            <div class="form-field"><label>Meta Secondary (Qualification / Eligibility)</label><input class="input" name="metaSecondary" value="${escapeHtml(item?.metaSecondary || "")}" /></div>
+          </div>
+          <div class="form-field"><label>Meta Tertiary (Last Date / Documents / Schedule)</label><input class="input" name="metaTertiary" value="${escapeHtml(item?.metaTertiary || "")}" /></div>
+          <div class="form-grid">
+            <div class="form-field"><label>Status</label><select class="select" name="status"><option value="ACTIVE" ${item?.status !== "INACTIVE" ? "selected" : ""}>ACTIVE</option><option value="INACTIVE" ${item?.status === "INACTIVE" ? "selected" : ""}>INACTIVE</option><option value="DRAFT" ${item?.status === "DRAFT" ? "selected" : ""}>DRAFT</option></select></div>
+            <div class="form-field"><label>Publish Now?</label><select class="select" name="isPublished"><option value="true" ${item?.isPublished !== false ? "selected" : ""}>Published</option><option value="false" ${item?.isPublished === false ? "selected" : ""}>Unpublished</option></select></div>
+          </div>
+          <div class="modal-actions"><button type="submit" class="btn btn-primary">Save to Firestore</button></div>
+        </form>
+      `, (body) => {
+        bindUrlPreviews(body);
+        body.querySelector("#cntForm").addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+          const fd = new FormData(ev.target);
+          const imageUrl = String(fd.get("imageUrl") || "").trim();
+          const actionUrl = String(fd.get("actionUrl") || "").trim();
+          if (imageUrl && !safeUrl(imageUrl)) return showToast("Image URL must start with http:// or https://", true);
+          if (actionUrl && !safeUrl(actionUrl)) return showToast("Action URL must start with http:// or https://", true);
+
+          const payload = {
+            title: String(fd.get("title")).trim(),
+            description: String(fd.get("description") || "").trim(),
+            category: String(fd.get("category")).trim(),
+            block: String(fd.get("block") || "").trim(),
+            imageUrl,
+            location: String(fd.get("location") || "").trim(),
+            contact: String(fd.get("contact") || "").trim(),
+            actionUrl,
+            badgeText: String(fd.get("badgeText") || "").trim(),
+            metaPrimary: String(fd.get("metaPrimary") || "").trim(),
+            metaSecondary: String(fd.get("metaSecondary") || "").trim(),
+            metaTertiary: String(fd.get("metaTertiary") || "").trim(),
+            status: fd.get("status"),
+            isPublished: fd.get("isPublished") === "true",
+            updatedAt: serverTimestamp()
+          };
+          if (item) {
+            await updateDoc(doc(db, navEntry.col, item.id), payload);
+            await writeAudit("EDIT", navEntry.module, item.id, payload.title);
+          } else {
+            const ref = await addDoc(collection(db, navEntry.col), { ...payload, createdBy: state.user.uid, createdAt: serverTimestamp() });
+            await writeAudit("CREATE", navEntry.module, ref.id, payload.title);
+          }
+          closeModal(); showToast("Saved successfully"); renderContentCrudPage(navEntry);
+        });
+      });
+    }
+
+    // =========================================================================
+    // 15. COMMUNITY, 16. LOST & FOUND, 18. BLOOD DONORS, 21. NOTIFICATIONS
+    // =========================================================================
+    async function renderCommunityPage() {
+      const rows = await fetchCol("community_posts");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header"><h3>Community Moderation</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Image</th><th>Post</th><th>Author</th><th>Likes / Comments</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${rows.map((p) => `
+                  <tr>
+                    <td>${safeUrl(p.imageUrl) ? `<img class="thumb" src="${escapeHtml(safeUrl(p.imageUrl))}" />` : "-"}</td>
+                    <td><strong>${escapeHtml(p.title)}</strong><div style="font-size:11px;color:var(--text-muted);">${escapeHtml((p.description || "").slice(0, 90))}</div></td>
+                    <td>${escapeHtml(p.authorName)}</td>
+                    <td>${p.likesCount || 0} / ${p.commentsCount || 0}</td>
+                    <td><span class="badge ${p.status === "ACTIVE" ? "badge-green" : "badge-red"}">${escapeHtml(p.status)}</span></td>
+                    <td>
+                      ${hasPerm("community", "edit") ? `<button class="btn btn-outline btn-sm" data-cmod="${escapeHtml(p.id)}" data-st="${p.status === "ACTIVE" ? "HIDDEN" : "ACTIVE"}">${p.status === "ACTIVE" ? "Hide" : "Restore"}</button>` : ""}
+                      ${hasPerm("community", "delete") ? `<button class="btn btn-danger btn-sm" data-cdelpost="${escapeHtml(p.id)}">Delete</button>` : ""}
+                    </td>
+                  </tr>
+                `).join("") || `<tr><td colspan="6">No community posts.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.querySelectorAll("[data-cmod]").forEach((b) => b.addEventListener("click", async () => {
+        await updateDoc(doc(db, "community_posts", b.dataset.cmod), { status: b.dataset.st, isPublished: b.dataset.st === "ACTIVE", updatedAt: serverTimestamp() });
+        await writeAudit("MODERATE_POST", "community", b.dataset.cmod, `Set status ${b.dataset.st}`);
+        showToast("Post updated"); renderCommunityPage();
+      }));
+      document.querySelectorAll("[data-cdelpost]").forEach((b) => b.addEventListener("click", async () => {
+        if (!confirm("Delete post?")) return;
+        await deleteDoc(doc(db, "community_posts", b.dataset.cdelpost));
+        await writeAudit("DELETE_POST", "community", b.dataset.cdelpost, "Deleted post");
+        showToast("Deleted"); renderCommunityPage();
+      }));
+    }
+
+    async function renderLostFoundPage() {
+      const rows = await fetchCol("lost_found");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header"><h3>Lost &amp; Found Moderation</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Image</th><th>Title</th><th>Type</th><th>Location &amp; Contact</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${rows.map((r) => `
+                  <tr>
+                    <td>${safeUrl(r.imageUrl) ? `<img class="thumb" src="${escapeHtml(safeUrl(r.imageUrl))}" />` : "-"}</td>
+                    <td><strong>${escapeHtml(r.title)}</strong><div style="font-size:11px;color:var(--text-muted);">${escapeHtml(r.description)}</div></td>
+                    <td><span class="badge ${r.category === "LOST" ? "badge-red" : "badge-green"}">${escapeHtml(r.category)}</span></td>
+                    <td>${escapeHtml(r.location)} &bull; ${escapeHtml(r.contactInfo)}</td>
+                    <td><span class="badge badge-blue">${escapeHtml(r.status)}</span></td>
+                    <td>
+                      ${hasPerm("lost_found", "edit") ? `<button class="btn btn-outline btn-sm" data-lfres="${escapeHtml(r.id)}">Mark Resolved</button>` : ""}
+                      ${hasPerm("lost_found", "delete") ? `<button class="btn btn-danger btn-sm" data-lfdel="${escapeHtml(r.id)}">Delete</button>` : ""}
+                    </td>
+                  </tr>
+                `).join("") || `<tr><td colspan="6">No items.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.querySelectorAll("[data-lfres]").forEach((b) => b.addEventListener("click", async () => {
+        await updateDoc(doc(db, "lost_found", b.dataset.lfres), { status: "RESOLVED", updatedAt: serverTimestamp() });
+        showToast("Marked resolved"); renderLostFoundPage();
+      }));
+      document.querySelectorAll("[data-lfdel]").forEach((b) => b.addEventListener("click", async () => {
+        await deleteDoc(doc(db, "lost_found", b.dataset.lfdel));
+        showToast("Deleted"); renderLostFoundPage();
+      }));
+    }
+
+    async function renderBloodDonorsPage() {
+      const rows = await fetchCol("blood_donors");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <h3>Blood Donors &amp; Requests</h3>
+            ${hasPerm("blood_donors", "add") ? `<button id="addBloodBtn" class="btn btn-primary">+ Add Entry</button>` : ""}
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Group</th><th>Type</th><th>Name</th><th>Location</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${rows.map((r) => `
+                  <tr>
+                    <td><span class="badge badge-red">${escapeHtml(r.bloodGroup)}</span></td>
+                    <td>${escapeHtml(r.category)}</td>
+                    <td><strong>${escapeHtml(r.title)}</strong></td>
+                    <td>${escapeHtml(r.location)}</td>
+                    <td>${escapeHtml(r.contactPhone)}</td>
+                    <td><span class="badge badge-green">${escapeHtml(r.status)}</span></td>
+                    <td>${hasPerm("blood_donors", "delete") ? `<button class="btn btn-danger btn-sm" data-bdel="${escapeHtml(r.id)}">Delete</button>` : ""}</td>
+                  </tr>
+                `).join("") || `<tr><td colspan="7">No entries.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.getElementById("addBloodBtn")?.addEventListener("click", () => {
+        openModal("Add Blood Donor / Request", `
+          <form id="bldForm">
+            <div class="form-grid">
+              <div class="form-field"><label>Type</label><select class="select" name="category"><option value="DONOR">DONOR</option><option value="REQUEST">REQUEST</option></select></div>
+              <div class="form-field"><label>Blood Group</label><select class="select" name="bloodGroup"><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select></div>
+            </div>
+            <div class="form-field"><label>Name</label><input class="input" name="title" required /></div>
+            <div class="form-grid">
+              <div class="form-field"><label>Location</label><input class="input" name="location" required /></div>
+              <div class="form-field"><label>Contact Phone</label><input class="input" name="contactPhone" required /></div>
+            </div>
+            <div class="modal-actions"><button type="submit" class="btn btn-primary">Save</button></div>
+          </form>
+        `, (body) => {
+          body.querySelector("#bldForm").addEventListener("submit", async (ev) => {
+            ev.preventDefault();
+            const fd = new FormData(ev.target);
+            await addDoc(collection(db, "blood_donors"), {
+              title: fd.get("title"), description: "", bloodGroup: fd.get("bloodGroup"),
+              category: fd.get("category"), location: fd.get("location"), contactPhone: fd.get("contactPhone"),
+              availability: "Available", userUid: state.user.uid, isPublished: true, status: "ACTIVE",
+              createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+            });
+            closeModal(); showToast("Added"); renderBloodDonorsPage();
+          });
+        });
+      });
+      document.querySelectorAll("[data-bdel]").forEach((b) => b.addEventListener("click", async () => {
+        await deleteDoc(doc(db, "blood_donors", b.dataset.bdel));
+        showToast("Deleted"); renderBloodDonorsPage();
+      }));
+    }
+
+    async function renderNotificationsPage() {
+      const rows = await fetchCol("notifications");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div><h3>Push &amp; In-App Notifications</h3><div style="font-size:12px;color:var(--text-muted);">Stored in Firestore <code>notifications</code>; trusted Cloud Function dispatches FCM push payloads.</div></div>
+            ${hasPerm("notifications", "add") ? `<button id="addNotifBtn" class="btn btn-primary">+ Prepare Notification</button>` : ""}
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Image</th><th>Title</th><th>Audience</th><th>Category</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${rows.map((n) => `
+                  <tr>
+                    <td>${safeUrl(n.imageUrl) ? `<img class="thumb" src="${escapeHtml(safeUrl(n.imageUrl))}" />` : "-"}</td>
+                    <td><strong>${escapeHtml(n.title)}</strong><div style="font-size:11px;color:var(--text-muted);">${escapeHtml(n.description)}</div></td>
+                    <td><span class="badge badge-blue">${escapeHtml(n.targetAudience)}</span></td>
+                    <td>${escapeHtml(n.category)}</td>
+                    <td><span class="badge badge-green">${escapeHtml(n.status)}</span></td>
+                    <td>${formatDate(n.createdAt)}</td>
+                    <td>${hasPerm("notifications", "delete") ? `<button class="btn btn-danger btn-sm" data-ndel="${escapeHtml(n.id)}">Delete</button>` : ""}</td>
+                  </tr>
+                `).join("") || `<tr><td colspan="7">No notifications yet.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.getElementById("addNotifBtn")?.addEventListener("click", () => {
+        openModal("Prepare Notification", `
+          <form id="notifForm">
+            <div class="form-field"><label>Title</label><input class="input" name="title" required /></div>
+            <div class="form-field"><label>Message</label><textarea class="textarea" rows="3" name="description" required></textarea></div>
+            <div class="form-grid">
+              <div class="form-field"><label>Target Audience</label>
+                <select class="select" name="targetAudience">
+                  <option value="ALL">All Users</option>
+                  <option value="STUDENTS">Students</option>
+                  <option value="FARMERS">Farmers</option>
+                  <option value="JOB_SEEKERS">Job Seekers</option>
+                  <option value="BUSINESS_OWNERS">Business Owners</option>
+                  <option value="USER">Specific User (UID)</option>
+                </select>
+              </div>
+              <div class="form-field"><label>Category</label><select class="select" name="category"><option>General</option><option>Job</option><option>Education</option><option>Emergency</option><option>Announcements</option></select></div>
+            </div>
+            <div class="form-field"><label>Specific User UID (if Target = USER)</label><input class="input" name="targetUid" /></div>
+            ${urlInputHtml("Notification Image URL (https://...)", "imageUrl", "")}
+            <div class="modal-actions"><button type="submit" class="btn btn-primary">Queue &amp; Publish</button></div>
+          </form>
+        `, (body) => {
+          bindUrlPreviews(body);
+          body.querySelector("#notifForm").addEventListener("submit", async (ev) => {
+            ev.preventDefault();
+            const fd = new FormData(ev.target);
+            const ref = await addDoc(collection(db, "notifications"), {
+              title: fd.get("title"), description: fd.get("description"),
+              imageUrl: String(fd.get("imageUrl") || "").trim(),
+              category: fd.get("category"), targetAudience: fd.get("targetAudience"),
+              targetUid: String(fd.get("targetUid") || "").trim(),
+              isPublished: true, status: "QUEUED", createdBy: state.user.uid,
+              createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+            });
+            await writeAudit("SEND_NOTIFICATION", "notifications", ref.id, fd.get("title"));
+            closeModal(); showToast("Notification queued & published"); renderNotificationsPage();
+          });
+        });
+      });
+      document.querySelectorAll("[data-ndel]").forEach((b) => b.addEventListener("click", async () => {
+        await deleteDoc(doc(db, "notifications", b.dataset.ndel));
+        showToast("Deleted"); renderNotificationsPage();
+      }));
+    }
+
+    // =========================================================================
+    // 24. APP UPDATES
+    // =========================================================================
+    async function renderAppUpdatesPage() {
+      const snap = await getDoc(doc(db, "app_updates", "current"));
+      const cur = snap.exists() ? snap.data() : {
+        latestVersion: "1.0", versionCode: 1, minSupportedVersion: 1,
+        releaseNotes: "", forceUpdate: false, maintenanceMode: false, maintenanceMessage: "", updateUrl: ""
+      };
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card" style="max-width:720px;">
+          <h3 style="margin-bottom:14px;">App Update &amp; Maintenance Configuration</h3>
+          <form id="updForm">
+            <div class="form-grid">
+              <div class="form-field"><label>Latest Version</label><input class="input" name="latestVersion" value="${escapeHtml(cur.latestVersion)}" required /></div>
+              <div class="form-field"><label>Version Code</label><input class="input" type="number" name="versionCode" value="${escapeHtml(cur.versionCode)}" required /></div>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label>Min Supported Version Code</label><input class="input" type="number" name="minSupportedVersion" value="${escapeHtml(cur.minSupportedVersion)}" required /></div>
+              <div class="form-field"><label>Update URL</label><input class="input" name="updateUrl" value="${escapeHtml(cur.updateUrl || "")}" placeholder="https://..." /></div>
+            </div>
+            <div class="form-field"><label>Release Notes</label><textarea class="textarea" rows="3" name="releaseNotes">${escapeHtml(cur.releaseNotes || "")}</textarea></div>
+            <div class="form-grid">
+              <div class="form-field"><label>Force Update</label><select class="select" name="forceUpdate"><option value="false" ${!cur.forceUpdate ? "selected" : ""}>No</option><option value="true" ${cur.forceUpdate ? "selected" : ""}>Yes (Block old versions)</option></select></div>
+              <div class="form-field"><label>Maintenance Mode</label><select class="select" name="maintenanceMode"><option value="false" ${!cur.maintenanceMode ? "selected" : ""}>Off</option><option value="true" ${cur.maintenanceMode ? "selected" : ""}>On (Lock User App)</option></select></div>
+            </div>
+            <div class="form-field"><label>Maintenance Message</label><input class="input" name="maintenanceMessage" value="${escapeHtml(cur.maintenanceMessage || "")}" /></div>
+            ${hasPerm("app_updates", "edit") ? `<button type="submit" class="btn btn-primary">Save App Update Config</button>` : ""}
+          </form>
+        </div>
+      `;
+      document.getElementById("updForm")?.addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        await setDoc(doc(db, "app_updates", "current"), {
+          latestVersion: fd.get("latestVersion"),
+          versionCode: parseInt(fd.get("versionCode"), 10) || 1,
+          minSupportedVersion: parseInt(fd.get("minSupportedVersion"), 10) || 1,
+          releaseNotes: fd.get("releaseNotes"),
+          updateUrl: String(fd.get("updateUrl") || "").trim(),
+          forceUpdate: fd.get("forceUpdate") === "true",
+          maintenanceMode: fd.get("maintenanceMode") === "true",
+          maintenanceMessage: fd.get("maintenanceMessage"),
+          updatedBy: state.user.uid,
+          updatedAt: serverTimestamp()
+        });
+        await writeAudit("APP_UPDATE_CONFIG", "app_updates", "current", `v${fd.get("latestVersion")} force=${fd.get("forceUpdate")}`);
+        showToast("App Update settings saved");
+      });
+    }
+
+    // =========================================================================
+    // 25. MANAGER MANAGEMENT (Super Admin Only)
+    // =========================================================================
+    const MANAGER_MODULES = [
+      "users", "categories", "news", "jobs", "education", "scholarships",
+      "healthcare", "businesses", "schemes", "agriculture", "market_prices",
+      "transport", "tourism", "community", "lost_found", "emergency",
+      "blood_donors", "services", "announcements", "notifications", "banners",
+      "ads", "app_updates", "reports"
+    ];
+
+    async function renderManagersPage() {
+      const rows = await fetchCol("managers");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div><h3>Manager &amp; Moderator RBAC</h3><div style="font-size:12px;color:var(--text-muted);">Enforced server-side by <code>firestore.rules</code>. Managers cannot modify their own permissions.</div></div>
+            <button id="addMgrBtn" class="btn btn-primary">+ Add Manager</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>UID</th><th>Role</th><th>Status</th><th>Modules</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${rows.map((m) => `
+                  <tr>
+                    <td><strong>${escapeHtml(m.name)}</strong></td>
+                    <td>${escapeHtml(m.email)}</td>
+                    <td><code>${escapeHtml(m.uid)}</code></td>
+                    <td><span class="badge badge-blue">${escapeHtml(m.role)}</span></td>
+                    <td><span class="badge ${m.status === "ACTIVE" ? "badge-green" : "badge-red"}">${escapeHtml(m.status)}</span></td>
+                    <td style="font-size:11px;">${Object.keys(m.permissions || {}).join(", ") || "None"}</td>
+                    <td>
+                      <button class="btn btn-outline btn-sm" data-medit="${escapeHtml(m.id)}">Permissions</button>
+                      <button class="btn btn-danger btn-sm" data-mdel="${escapeHtml(m.id)}">Remove</button>
+                    </td>
+                  </tr>
+                `).join("") || `<tr><td colspan="7">No managers configured yet.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.getElementById("addMgrBtn").addEventListener("click", () => openManagerModal(null));
+      document.querySelectorAll("[data-medit]").forEach((b) => b.addEventListener("click", () => openManagerModal(rows.find((x) => x.id === b.dataset.medit))));
+      document.querySelectorAll("[data-mdel]").forEach((b) => b.addEventListener("click", async () => {
+        if (!confirm("Revoke manager access?")) return;
+        await deleteDoc(doc(db, "managers", b.dataset.mdel));
+        await writeAudit("DELETE_MANAGER", "managers", b.dataset.mdel, "Revoked manager access");
+        showToast("Manager removed"); renderManagersPage();
+      }));
+    }
+
+    function openManagerModal(mgr) {
+      const existingPerms = mgr?.permissions || {};
+      openModal(mgr ? "Edit Manager Permissions" : "Create Manager Account", `
+        <form id="mgrForm">
+          <div class="form-field"><label>Firebase Auth UID</label><input class="input" name="uid" value="${escapeHtml(mgr?.uid || "")}" ${mgr ? "readonly" : "required"} /></div>
+          <div class="form-grid">
+            <div class="form-field"><label>Full Name</label><input class="input" name="name" value="${escapeHtml(mgr?.name || "")}" required /></div>
+            <div class="form-field"><label>Google Email</label><input class="input" name="email" value="${escapeHtml(mgr?.email || "")}" required /></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-field"><label>Role</label><select class="select" name="role"><option value="MANAGER" ${mgr?.role !== "MODERATOR" ? "selected" : ""}>MANAGER</option><option value="MODERATOR" ${mgr?.role === "MODERATOR" ? "selected" : ""}>MODERATOR</option></select></div>
+            <div class="form-field"><label>Status</label><select class="select" name="status"><option value="ACTIVE" ${mgr?.status !== "SUSPENDED" ? "selected" : ""}>ACTIVE</option><option value="SUSPENDED" ${mgr?.status === "SUSPENDED" ? "selected" : ""}>SUSPENDED</option></select></div>
+          </div>
+          <div class="form-field"><label>Module Permissions</label></div>
+          <div style="max-height:240px; overflow-y:auto; border:1px solid var(--border); border-radius:12px; padding:10px;">
+            ${MANAGER_MODULES.map((mod) => {
+              const cur = existingPerms[mod] || [];
+              return `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-size:12px;">
+                  <strong>${escapeHtml(mod)}</strong>
+                  <div style="display:flex; gap:8px;">
+                    ${["view", "add", "edit", "delete", "publish"].map((act) => `
+                      <label style="display:inline-flex;align-items:center;gap:3px;">
+                        <input type="checkbox" name="perm_${mod}_${act}" ${cur.includes(act) ? "checked" : ""} /> ${act}
+                      </label>
+                    `).join("")}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+          <div class="modal-actions"><button type="submit" class="btn btn-primary">Save Manager</button></div>
+        </form>
+      `, (body) => {
+        body.querySelector("#mgrForm").addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+          const fd = new FormData(ev.target);
+          const uid = String(fd.get("uid")).trim();
+          const permissions = {};
+          MANAGER_MODULES.forEach((mod) => {
+            const acts = ["view", "add", "edit", "delete", "publish"].filter((act) => fd.get(`perm_${mod}_${act}`) === "on");
+            if (acts.length > 0) permissions[mod] = acts;
+          });
+          const payload = {
+            uid, name: String(fd.get("name")).trim(), email: String(fd.get("email")).trim(),
+            photoUrl: mgr?.photoUrl || "", role: fd.get("role"), status: fd.get("status"),
+            permissions, createdBy: mgr?.createdBy || state.user.uid,
+            updatedAt: serverTimestamp()
+          };
+          if (mgr) {
+            await updateDoc(doc(db, "managers", uid), payload);
+          } else {
+            await setDoc(doc(db, "managers", uid), { ...payload, createdAt: serverTimestamp() });
+          }
+          await writeAudit("SAVE_MANAGER", "managers", uid, `Saved permissions for ${payload.email}`);
+          closeModal(); showToast("Manager saved"); renderManagersPage();
+        });
+      });
+    }
+
+    // =========================================================================
+    // 26. REPORTS, 27. ANALYTICS, 28-31. PROFILE / SETTINGS / SECURITY / AUDIT
+    // =========================================================================
+    async function renderReportsPage() {
+      const rows = await fetchCol("reports");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header"><h3>User Content Reports</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Target</th><th>Reason</th><th>Reporter UID</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${rows.map((r) => `
+                  <tr>
+                    <td><code>${escapeHtml(r.targetCollection)}/${escapeHtml(r.targetId)}</code></td>
+                    <td><strong>${escapeHtml(r.reason)}</strong><div style="font-size:11px;color:var(--text-muted);">${escapeHtml(r.details || "")}</div></td>
+                    <td><code>${escapeHtml(r.reporterUid)}</code></td>
+                    <td><span class="badge ${r.status === "PENDING" ? "badge-amber" : "badge-green"}">${escapeHtml(r.status)}</span></td>
+                    <td>${formatDate(r.createdAt)}</td>
+                    <td>
+                      ${hasPerm("reports", "edit") ? `<button class="btn btn-outline btn-sm" data-rresolve="${escapeHtml(r.id)}">Resolve</button>` : ""}
+                      ${hasPerm("reports", "delete") ? `<button class="btn btn-danger btn-sm" data-rdel="${escapeHtml(r.id)}">Delete</button>` : ""}
+                    </td>
+                  </tr>
+                `).join("") || `<tr><td colspan="6">No reports submitted.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.querySelectorAll("[data-rresolve]").forEach((b) => b.addEventListener("click", async () => {
+        await updateDoc(doc(db, "reports", b.dataset.rresolve), { status: "RESOLVED", updatedAt: serverTimestamp() });
+        await writeAudit("RESOLVE_REPORT", "reports", b.dataset.rresolve, "Marked report resolved");
+        showToast("Report resolved"); renderReportsPage();
+      }));
+      document.querySelectorAll("[data-rdel]").forEach((b) => b.addEventListener("click", async () => {
+        await deleteDoc(doc(db, "reports", b.dataset.rdel));
+        showToast("Deleted"); renderReportsPage();
+      }));
+    }
+
+    async function renderAnalytics() {
+      const cols = ["news", "jobs", "education", "healthcare", "businesses", "government_schemes", "agriculture", "community_posts", "lost_found"];
+      const counts = await Promise.all(cols.map(async (c) => [c, (await fetchCol(c)).length]));
+      const maxC = Math.max(1, ...counts.map((x) => x[1]));
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <h3 style="margin-bottom:14px;">Content Distribution Across Firestore Modules</h3>
+          ${counts.map(([name, cnt]) => `
+            <div class="chart-bar-row">
+              <span style="width:150px;">${escapeHtml(name)}</span>
+              <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${Math.round((cnt / maxC) * 100)}%"></div></div>
+              <strong>${cnt}</strong>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderAdminProfilePage() {
+      const u = state.user;
+      const photo = safeUrl(u.photoURL);
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card" style="max-width:520px; text-align:center;">
+          ${photo ? `<img src="${escapeHtml(photo)}" class="avatar" style="width:84px;height:84px;margin-bottom:12px;" />` : `<div class="avatar" style="width:84px;height:84px;font-size:28px;margin:0 auto 12px;">${escapeHtml((u.displayName || "A")[0])}</div>`}
+          <h3>${escapeHtml(u.displayName || "Admin")}</h3>
+          <div style="color:var(--text-muted); font-size:13px; margin:6px 0;">${escapeHtml(u.email)}</div>
+          <div style="margin:10px 0;"><span class="badge badge-green">${escapeHtml(state.role)}</span></div>
+          <div style="font-size:12px; color:var(--text-muted);">Firebase UID: <code>${escapeHtml(u.uid)}</code></div>
+        </div>
+      `;
+    }
+
+    async function renderSystemSettingsPage() {
+      const snap = await getDoc(doc(db, "settings", "public"));
+      const cur = snap.exists() ? snap.data() : {
+        appName: "Murshidabad Connect", developerName: "Slstrms Technologies",
+        supportEmail: "support@slstrms.in", supportPhone: "", appLogoUrl: "",
+        privacyPolicy: "", termsConditions: ""
+      };
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card" style="max-width:740px;">
+          <h3 style="margin-bottom:14px;">System &amp; Public Settings</h3>
+          <form id="sysForm">
+            <div class="form-grid">
+              <div class="form-field"><label>App Name</label><input class="input" name="appName" value="${escapeHtml(cur.appName || "")}" /></div>
+              <div class="form-field"><label>Developer</label><input class="input" name="developerName" value="${escapeHtml(cur.developerName || "")}" /></div>
+            </div>
+            <div class="form-grid">
+              <div class="form-field"><label>Support Email</label><input class="input" name="supportEmail" value="${escapeHtml(cur.supportEmail || "")}" /></div>
+              <div class="form-field"><label>Support Phone</label><input class="input" name="supportPhone" value="${escapeHtml(cur.supportPhone || "")}" /></div>
+            </div>
+            ${urlInputHtml("App Logo URL (https://...)", "appLogoUrl", cur.appLogoUrl || "")}
+            <div class="form-field"><label>Privacy Policy</label><textarea class="textarea" rows="4" name="privacyPolicy">${escapeHtml(cur.privacyPolicy || "")}</textarea></div>
+            <div class="form-field"><label>Terms &amp; Conditions</label><textarea class="textarea" rows="4" name="termsConditions">${escapeHtml(cur.termsConditions || "")}</textarea></div>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+          </form>
+        </div>
+      `;
+      bindUrlPreviews(document.getElementById("mainContent"));
+      document.getElementById("sysForm").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const fd = new FormData(ev.target);
+        await setDoc(doc(db, "settings", "public"), {
+          appName: fd.get("appName"), developerName: fd.get("developerName"),
+          supportEmail: fd.get("supportEmail"), supportPhone: fd.get("supportPhone"),
+          appLogoUrl: String(fd.get("appLogoUrl") || "").trim(),
+          privacyPolicy: fd.get("privacyPolicy"), termsConditions: fd.get("termsConditions"),
+          updatedBy: state.user.uid, updatedAt: serverTimestamp()
+        });
+        await writeAudit("UPDATE_SETTINGS", "settings", "public", "Updated public system settings");
+        showToast("Settings saved");
+      });
+    }
+
+    async function renderSecuritySettingsPage() {
+      const admins = await fetchCol("admins");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <div class="card-header">
+            <div><h3>Admin Allowlist (Super Admin Only)</h3><div style="font-size:12px;color:var(--text-muted);">Only explicitly listed UIDs in <code>admins</code> can access admin privileges.</div></div>
+            <button id="addAdmBtn" class="btn btn-primary">+ Authorize Admin</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>UID</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                ${admins.map((a) => `
+                  <tr>
+                    <td><strong>${escapeHtml(a.name)}</strong></td>
+                    <td>${escapeHtml(a.email)}</td>
+                    <td><code>${escapeHtml(a.uid)}</code></td>
+                    <td><span class="badge badge-green">${escapeHtml(a.role)}</span></td>
+                    <td><span class="badge ${a.status === "ACTIVE" ? "badge-green" : "badge-red"}">${escapeHtml(a.status)}</span></td>
+                    <td>${a.uid !== state.user.uid ? `<button class="btn btn-danger btn-sm" data-adel="${escapeHtml(a.id)}">Revoke</button>` : "Current"}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      document.getElementById("addAdmBtn").addEventListener("click", () => {
+        openModal("Authorize Admin", `
+          <form id="admForm">
+            <div class="form-field"><label>Firebase Auth UID</label><input class="input" name="uid" required /></div>
+            <div class="form-field"><label>Name</label><input class="input" name="name" required /></div>
+            <div class="form-field"><label>Google Email</label><input class="input" name="email" required /></div>
+            <div class="form-field"><label>Role</label><select class="select" name="role"><option value="ADMIN">ADMIN</option><option value="SUPER_ADMIN">SUPER_ADMIN</option></select></div>
+            <div class="modal-actions"><button type="submit" class="btn btn-primary">Authorize</button></div>
+          </form>
+        `, (body) => {
+          body.querySelector("#admForm").addEventListener("submit", async (ev) => {
+            ev.preventDefault();
+            const fd = new FormData(ev.target);
+            const uid = String(fd.get("uid")).trim();
+            await setDoc(doc(db, "admins", uid), {
+              uid, name: fd.get("name"), email: fd.get("email"), photoUrl: "",
+              role: fd.get("role"), status: "ACTIVE",
+              createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+            });
+            await writeAudit("ADD_ADMIN", "admins", uid, `Authorized ${fd.get("email")}`);
+            closeModal(); showToast("Admin authorized"); renderSecuritySettingsPage();
+          });
+        });
+      });
+      document.querySelectorAll("[data-adel]").forEach((b) => b.addEventListener("click", async () => {
+        if (!confirm("Revoke admin access?")) return;
+        await deleteDoc(doc(db, "admins", b.dataset.adel));
+        await writeAudit("REMOVE_ADMIN", "admins", b.dataset.adel, "Revoked admin");
+        showToast("Admin removed"); renderSecuritySettingsPage();
+      }));
+    }
+
+    async function renderAuditLogsPage() {
+      const logs = await fetchCol("audit_logs");
+      document.getElementById("mainContent").innerHTML = `
+        <div class="card">
+          <h3 style="margin-bottom:12px;">Immutable Audit Logs</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Module</th><th>Summary</th></tr></thead>
+              <tbody>
+                ${logs.map((l) => `
+                  <tr>
+                    <td>${formatDate(l.createdAt)}</td>
+                    <td>${escapeHtml(l.actorEmail)}</td>
+                    <td><span class="badge badge-blue">${escapeHtml(l.action)}</span></td>
+                    <td>${escapeHtml(l.module)}</td>
+                    <td>${escapeHtml(l.summary)}</td>
+                  </tr>
+                `).join("") || `<tr><td colspan="5">No audit entries yet.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // URL-ONLY IMAGE INPUT + LIVE PREVIEW HELPER
+    // =========================================================================
+    function urlInputHtml(label, name, value) {
+      const safe = safeUrl(value);
+      return `
+        <div class="form-field url-field-group">
+          <label>${escapeHtml(label)}</label>
+          <div style="display:flex; gap:8px;">
+            <input class="input url-input" name="${escapeHtml(name)}" value="${escapeHtml(value)}" placeholder="https://i.ibb.co/..." />
+            <button type="button" class="btn btn-outline btn-sm clear-url-btn">Remove URL</button>
+          </div>
+          <div class="preview-box ${safe ? "" : "hidden"}">
+            <img class="url-preview-img" src="${escapeHtml(safe)}" alt="Preview" />
+          </div>
+        </div>
+      `;
+    }
+
+    function bindUrlPreviews(root) {
+      root.querySelectorAll(".url-field-group").forEach((grp) => {
+        const inp = grp.querySelector(".url-input");
+        const box = grp.querySelector(".preview-box");
+        const img = grp.querySelector(".url-preview-img");
+        const clr = grp.querySelector(".clear-url-btn");
+        inp.addEventListener("input", () => {
+          const u = safeUrl(inp.value);
+          if (u) {
+            img.src = u;
+            box.classList.remove("hidden");
+          } else {
+            img.removeAttribute("src");
+            box.classList.add("hidden");
+          }
+        });
+        img.addEventListener("error", () => {
+          box.classList.add("hidden");
+        });
+        clr.addEventListener("click", () => {
+          inp.value = "";
+          img.removeAttribute("src");
+          box.classList.add("hidden");
+        });
+      });
+    }
+
+    function renderPagination(total, redrawFn) {
+      const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+      setTimeout(() => {
+        document.getElementById("pgPrev")?.addEventListener("click", () => { if (state.pageNum > 1) { state.pageNum--; redrawFn(); } });
+        document.getElementById("pgNext")?.addEventListener("click", () => { if (state.pageNum < totalPages) { state.pageNum++; redrawFn(); } });
+      }, 0);
+      return `
+        <div class="pagination">
+          <span>Showing page ${state.pageNum} of ${totalPages} (${total} records)</span>
+          <div style="display:flex; gap:8px;">
+            <button id="pgPrev" class="btn btn-outline btn-sm" ${state.pageNum <= 1 ? "disabled" : ""}>Previous</button>
+            <button id="pgNext" class="btn btn-outline btn-sm" ${state.pageNum >= totalPages ? "disabled" : ""}>Next</button>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

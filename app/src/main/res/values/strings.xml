@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Murshidabad Connect</string>
+    <string name="developer_name">Slstrms Technologies</string>
+    <string name="tagline">Our District, Our Pride</string>
+    <string name="sign_in_with_google">Continue with Google</string>
+    <string name="error_network">Network error. Please check your connection and try again.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="cd_app_logo">Murshidabad Connect logo</string>
+    <string name="cd_profile_photo">User profile photo</string>
+    <string name="cd_banner_image">Banner image</string>
+    <string name="cd_content_image">Content image</string>
+    <string name="cd_help_button">Help and Emergency</string>
+</resources>

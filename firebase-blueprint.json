@@ -1,0 +1,309 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Murshidabad Connect resident profile tied to Google Sign-In UID.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "description": "Google email" },
+        "photoUrl": { "type": "string", "description": "Google profile photo URL" },
+        "provider": { "type": "string", "description": "Auth provider (google.com)" },
+        "role": { "type": "string", "enum": ["USER"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+        "district": { "type": "string" },
+        "block": { "type": "string" },
+        "village": { "type": "string" },
+        "mobile": { "type": "string" },
+        "preferredLanguage": { "type": "string", "enum": ["bn", "en", "hi"] },
+        "selectedDashboards": { "type": "array" },
+        "primaryDashboard": { "type": "string" },
+        "fcmToken": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp" }
+      },
+      "required": ["uid", "name", "email", "provider", "role", "status", "district", "selectedDashboards", "primaryDashboard", "createdAt", "updatedAt"]
+    },
+    "AdminAccount": {
+      "title": "AdminAccount",
+      "description": "Authorized admin record managed by Super Admin.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "role": { "type": "string", "enum": ["SUPER_ADMIN", "ADMIN"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "name", "role", "status", "createdAt", "updatedAt"]
+    },
+    "ManagerAccount": {
+      "title": "ManagerAccount",
+      "description": "Module-scoped manager or moderator account.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "role": { "type": "string", "enum": ["MANAGER", "MODERATOR"] },
+        "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+        "permissions": { "type": "object" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "name", "role", "status", "permissions", "createdBy", "createdAt", "updatedAt"]
+    },
+    "DashboardCategory": {
+      "title": "DashboardCategory",
+      "description": "Admin-managed citizen dashboard category with URL-only icon and banner.",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "bengaliName": { "type": "string" },
+        "englishName": { "type": "string" },
+        "hindiName": { "type": "string" },
+        "description": { "type": "string" },
+        "iconUrl": { "type": "string" },
+        "bannerUrl": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "displayOrder": { "type": "integer" },
+        "isPublished": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["slug", "title", "bengaliName", "englishName", "displayOrder", "isPublished", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ContentItem": {
+      "title": "ContentItem",
+      "description": "Unified civic content record for News, Jobs, Education, Scholarships, Healthcare, Businesses, Schemes, Agriculture, Market Prices, Transport, Tourism, Services, Announcements, Banners, Ads.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "subCategory": { "type": "string" },
+        "block": { "type": "string" },
+        "location": { "type": "string" },
+        "contact": { "type": "string" },
+        "actionUrl": { "type": "string" },
+        "badgeText": { "type": "string" },
+        "metaPrimary": { "type": "string" },
+        "metaSecondary": { "type": "string" },
+        "metaTertiary": { "type": "string" },
+        "targetDashboard": { "type": "string" },
+        "displayOrder": { "type": "integer" },
+        "ratingAvg": { "type": "number" },
+        "ratingCount": { "type": "integer" },
+        "isPublished": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "DRAFT"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "category", "isPublished", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "CommunityPost": {
+      "title": "CommunityPost",
+      "description": "User-submitted Murshidabad community post with optional URL-only image.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "block": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhotoUrl": { "type": "string" },
+        "likedBy": { "type": "array" },
+        "likesCount": { "type": "integer" },
+        "commentsCount": { "type": "integer" },
+        "isPublished": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "HIDDEN", "FLAGGED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "category", "authorUid", "authorName", "likedBy", "likesCount", "commentsCount", "isPublished", "status", "createdAt", "updatedAt"]
+    },
+    "CommunityComment": {
+      "title": "CommunityComment",
+      "description": "Comment on a community post.",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhotoUrl": { "type": "string" },
+        "text": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "HIDDEN"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "authorUid", "authorName", "text", "status", "createdAt", "updatedAt"]
+    },
+    "LostFoundItem": {
+      "title": "LostFoundItem",
+      "description": "Lost or found item report with URL-only image.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string", "enum": ["LOST", "FOUND"] },
+        "location": { "type": "string" },
+        "contactInfo": { "type": "string" },
+        "dateText": { "type": "string" },
+        "reporterUid": { "type": "string" },
+        "reporterName": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["OPEN", "RESOLVED", "HIDDEN"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "category", "location", "contactInfo", "reporterUid", "isPublished", "status", "createdAt", "updatedAt"]
+    },
+    "BloodDonorItem": {
+      "title": "BloodDonorItem",
+      "description": "Blood donor or urgent blood request record.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "category": { "type": "string", "enum": ["DONOR", "REQUEST"] },
+        "location": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "availability": { "type": "string" },
+        "userUid": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["ACTIVE", "FULFILLED", "INACTIVE"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "bloodGroup", "category", "location", "contactPhone", "userUid", "isPublished", "status", "createdAt", "updatedAt"]
+    },
+    "NotificationItem": {
+      "title": "NotificationItem",
+      "description": "Broadcast or targeted notification prepared for FCM delivery.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "targetAudience": { "type": "string" },
+        "targetUid": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["QUEUED", "SENT", "DRAFT"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "category", "targetAudience", "isPublished", "status", "createdBy", "createdAt", "updatedAt"]
+    },
+    "AppUpdateConfig": {
+      "title": "AppUpdateConfig",
+      "description": "Remote app version, force update, and maintenance mode configuration.",
+      "type": "object",
+      "properties": {
+        "latestVersion": { "type": "string" },
+        "versionCode": { "type": "integer" },
+        "minSupportedVersion": { "type": "integer" },
+        "releaseNotes": { "type": "string" },
+        "forceUpdate": { "type": "boolean" },
+        "maintenanceMode": { "type": "boolean" },
+        "maintenanceMessage": { "type": "string" },
+        "updateUrl": { "type": "string" },
+        "updatedBy": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["latestVersion", "versionCode", "minSupportedVersion", "forceUpdate", "maintenanceMode", "updatedBy", "updatedAt"]
+    },
+    "ReportItem": {
+      "title": "ReportItem",
+      "description": "User-submitted content moderation report.",
+      "type": "object",
+      "properties": {
+        "targetCollection": { "type": "string" },
+        "targetId": { "type": "string" },
+        "reason": { "type": "string" },
+        "details": { "type": "string" },
+        "reporterUid": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "REVIEWED", "RESOLVED", "DISMISSED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["targetCollection", "targetId", "reason", "reporterUid", "status", "createdAt", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable admin/manager audit trail.",
+      "type": "object",
+      "properties": {
+        "actorUid": { "type": "string" },
+        "actorEmail": { "type": "string" },
+        "action": { "type": "string" },
+        "module": { "type": "string" },
+        "targetId": { "type": "string" },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["actorUid", "actorEmail", "action", "module", "summary", "createdAt"]
+    },
+    "BusinessReview": {
+      "title": "BusinessReview",
+      "description": "User review for a local business listing.",
+      "type": "object",
+      "properties": {
+        "authorUid": { "type": "string" },
+        "authorName": { "type": "string" },
+        "rating": { "type": "integer" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorUid", "authorName", "rating", "comment", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": { "$ref": "#/entities/UserProfile" }, "description": "User profiles" },
+    "/admins/{adminId}": { "schema": { "$ref": "#/entities/AdminAccount" }, "description": "Admin allowlist" },
+    "/managers/{managerId}": { "schema": { "$ref": "#/entities/ManagerAccount" }, "description": "Manager accounts and permissions" },
+    "/dashboard_categories/{catId}": { "schema": { "$ref": "#/entities/DashboardCategory" }, "description": "Dashboard categories" },
+    "/news/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Local and district news" },
+    "/jobs/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Job postings" },
+    "/education/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Education listings and notices" },
+    "/scholarships/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Scholarships" },
+    "/healthcare/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Hospitals, clinics, doctors" },
+    "/businesses/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Business directory" },
+    "/businesses/{docId}/reviews/{reviewId}": { "schema": { "$ref": "#/entities/BusinessReview" }, "description": "Business reviews" },
+    "/government_schemes/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Government schemes" },
+    "/agriculture/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Agriculture info" },
+    "/market_prices/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Market prices" },
+    "/transport/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Transport routes and notices" },
+    "/tourism/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Tourism spots" },
+    "/community_posts/{postId}": { "schema": { "$ref": "#/entities/CommunityPost" }, "description": "Community posts" },
+    "/community_comments/{commentId}": { "schema": { "$ref": "#/entities/CommunityComment" }, "description": "Community comments" },
+    "/lost_found/{itemId}": { "schema": { "$ref": "#/entities/LostFoundItem" }, "description": "Lost and found items" },
+    "/emergency_contacts/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Emergency numbers" },
+    "/blood_donors/{donorId}": { "schema": { "$ref": "#/entities/BloodDonorItem" }, "description": "Blood donors and requests" },
+    "/services/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Civic services" },
+    "/announcements/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "District announcements" },
+    "/notifications/{notifId}": { "schema": { "$ref": "#/entities/NotificationItem" }, "description": "Push & in-app notifications" },
+    "/banners/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Home banners" },
+    "/advertisements/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Local advertisements" },
+    "/app_updates/{docId}": { "schema": { "$ref": "#/entities/AppUpdateConfig" }, "description": "App update and maintenance config" },
+    "/reports/{reportId}": { "schema": { "$ref": "#/entities/ReportItem" }, "description": "Content reports" },
+    "/settings/{docId}": { "schema": { "$ref": "#/entities/ContentItem" }, "description": "Public and system settings" },
+    "/audit_logs/{logId}": { "schema": { "$ref": "#/entities/AuditLog" }, "description": "Audit logs" }
+  }
+}

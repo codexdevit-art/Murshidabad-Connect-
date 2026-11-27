@@ -1,0 +1,752 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Global Safety Net (Default-Deny)
+    // -------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Core Primitives & Zero-Trust Helpers
+    // -------------------------------------------------------------------------
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidUrl(url) {
+      return url is string && url.size() <= 1000 && (url == '' || url.matches('^https?://.*'));
+    }
+
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isOptionalString(data, key, maxLen) {
+      return !(key in data) || data[key] == null || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isOptionalUrl(data, key) {
+      return !(key in data) || data[key] == null || isValidUrl(data[key]);
+    }
+
+    function isBootstrapSuperAdmin() {
+      return isSignedIn() &&
+             request.auth.token.email_verified == true &&
+             request.auth.token.email == 'rjjejsjs29@gmail.com';
+    }
+
+    function adminDocPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.uid);
+    }
+
+    function managerDocPath() {
+      return /databases/$(database)/documents/managers/$(request.auth.uid);
+    }
+
+    function isActiveAdminDoc() {
+      return isSignedIn() &&
+             exists(adminDocPath()) &&
+             get(adminDocPath()).data.status == 'ACTIVE';
+    }
+
+    function isSuperAdmin() {
+      return isBootstrapSuperAdmin() ||
+             (isActiveAdminDoc() && get(adminDocPath()).data.role == 'SUPER_ADMIN');
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() ||
+             (isActiveAdminDoc() && get(adminDocPath()).data.role in ['SUPER_ADMIN', 'ADMIN']);
+    }
+
+    function isActiveManager() {
+      return isSignedIn() &&
+             exists(managerDocPath()) &&
+             get(managerDocPath()).data.status == 'ACTIVE' &&
+             get(managerDocPath()).data.role in ['MANAGER', 'MODERATOR'];
+    }
+
+    function hasManagerPerm(moduleKey, action) {
+      return isActiveManager() &&
+             get(managerDocPath()).data.permissions is map &&
+             moduleKey in get(managerDocPath()).data.permissions &&
+             get(managerDocPath()).data.permissions[moduleKey] is list &&
+             action in get(managerDocPath()).data.permissions[moduleKey];
+    }
+
+    function canReadModule(moduleKey) {
+      return isAdmin() || hasManagerPerm(moduleKey, 'view');
+    }
+
+    function canAddModule(moduleKey) {
+      return isAdmin() || hasManagerPerm(moduleKey, 'add');
+    }
+
+    function canEditModule(moduleKey) {
+      return isAdmin() || hasManagerPerm(moduleKey, 'edit');
+    }
+
+    function canDeleteModule(moduleKey) {
+      return isAdmin() || hasManagerPerm(moduleKey, 'delete');
+    }
+
+    function canPublishModule(moduleKey) {
+      return isAdmin() || hasManagerPerm(moduleKey, 'publish');
+    }
+
+    // -------------------------------------------------------------------------
+    // Entity Validation Helpers (Anti-Update-Gap)
+    // -------------------------------------------------------------------------
+    function isValidUser(data) {
+      return isValidString(data.uid, 1, 128) &&
+             isValidString(data.name, 1, 120) &&
+             isValidString(data.email, 3, 200) &&
+             isOptionalUrl(data, 'photoUrl') &&
+             isValidString(data.provider, 1, 60) &&
+             data.role in ['USER'] &&
+             data.status in ['ACTIVE', 'SUSPENDED'] &&
+             isValidString(data.district, 1, 80) &&
+             isOptionalString(data, 'block', 80) &&
+             isOptionalString(data, 'village', 120) &&
+             isOptionalString(data, 'mobile', 20) &&
+             (!('preferredLanguage' in data) || data.preferredLanguage in ['bn', 'en', 'hi']) &&
+             data.selectedDashboards is list &&
+             data.selectedDashboards.size() <= 10 &&
+             (data.selectedDashboards.size() == 0 || data.selectedDashboards[0] is string) &&
+             isValidString(data.primaryDashboard, 1, 64) &&
+             (!('fcmToken' in data) || data.fcmToken == null || (data.fcmToken is string && data.fcmToken.size() <= 512)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidAdmin(data) {
+      return isValidString(data.uid, 1, 128) &&
+             isValidString(data.email, 3, 200) &&
+             isValidString(data.name, 1, 120) &&
+             isOptionalUrl(data, 'photoUrl') &&
+             data.role in ['SUPER_ADMIN', 'ADMIN'] &&
+             data.status in ['ACTIVE', 'SUSPENDED'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidManager(data) {
+      return isValidString(data.uid, 1, 128) &&
+             isValidString(data.email, 3, 200) &&
+             isValidString(data.name, 1, 120) &&
+             isOptionalUrl(data, 'photoUrl') &&
+             data.role in ['MANAGER', 'MODERATOR'] &&
+             data.status in ['ACTIVE', 'SUSPENDED'] &&
+             data.permissions is map &&
+             data.permissions.size() <= 35 &&
+             isValidString(data.createdBy, 1, 128) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidDashboardCategory(data) {
+      return isValidString(data.slug, 1, 64) &&
+             isValidString(data.title, 1, 120) &&
+             isValidString(data.bengaliName, 1, 120) &&
+             isValidString(data.englishName, 1, 120) &&
+             isOptionalString(data, 'hindiName', 120) &&
+             isOptionalString(data, 'description', 600) &&
+             isOptionalUrl(data, 'iconUrl') &&
+             isOptionalUrl(data, 'bannerUrl') &&
+             isOptionalUrl(data, 'imageUrl') &&
+             data.displayOrder is int &&
+             data.displayOrder >= 0 &&
+             data.displayOrder <= 1000 &&
+             data.isPublished is bool &&
+             data.status in ['ACTIVE', 'INACTIVE'] &&
+             isValidString(data.createdBy, 1, 128) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidContentDoc(data) {
+      return isValidString(data.title, 1, 240) &&
+             isValidString(data.description, 0, 8000) &&
+             isOptionalUrl(data, 'imageUrl') &&
+             isValidString(data.category, 1, 80) &&
+             isOptionalString(data, 'subCategory', 80) &&
+             isOptionalString(data, 'block', 80) &&
+             isOptionalString(data, 'location', 200) &&
+             isOptionalString(data, 'contact', 120) &&
+             isOptionalUrl(data, 'actionUrl') &&
+             isOptionalString(data, 'badgeText', 60) &&
+             isOptionalString(data, 'metaPrimary', 200) &&
+             isOptionalString(data, 'metaSecondary', 200) &&
+             isOptionalString(data, 'metaTertiary', 200) &&
+             isOptionalString(data, 'targetDashboard', 64) &&
+             (!('displayOrder' in data) || data.displayOrder == null || (data.displayOrder is int && data.displayOrder >= 0 && data.displayOrder <= 10000)) &&
+             (!('ratingAvg' in data) || data.ratingAvg == null || (data.ratingAvg is number && data.ratingAvg >= 0 && data.ratingAvg <= 5)) &&
+             (!('ratingCount' in data) || data.ratingCount == null || (data.ratingCount is int && data.ratingCount >= 0)) &&
+             data.isPublished is bool &&
+             data.status in ['ACTIVE', 'INACTIVE', 'DRAFT'] &&
+             isValidString(data.createdBy, 1, 128) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCommunityPost(data) {
+      return isValidString(data.title, 1, 200) &&
+             isValidString(data.description, 1, 4000) &&
+             isOptionalUrl(data, 'imageUrl') &&
+             isValidString(data.category, 1, 60) &&
+             isOptionalString(data, 'block', 80) &&
+             isValidString(data.authorUid, 1, 128) &&
+             isValidString(data.authorName, 1, 120) &&
+             isOptionalUrl(data, 'authorPhotoUrl') &&
+             data.likedBy is list &&
+             data.likedBy.size() <= 500 &&
+             (data.likedBy.size() == 0 || data.likedBy[0] is string) &&
+             data.likesCount is int &&
+             data.likesCount >= 0 &&
+             data.commentsCount is int &&
+             data.commentsCount >= 0 &&
+             data.isPublished is bool &&
+             data.status in ['ACTIVE', 'HIDDEN', 'FLAGGED'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCommunityComment(data) {
+      return isValidId(data.postId) &&
+             isValidString(data.authorUid, 1, 128) &&
+             isValidString(data.authorName, 1, 120) &&
+             isOptionalUrl(data, 'authorPhotoUrl') &&
+             isValidString(data.text, 1, 1000) &&
+             data.status in ['ACTIVE', 'HIDDEN'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidLostFound(data) {
+      return isValidString(data.title, 1, 200) &&
+             isValidString(data.description, 1, 2000) &&
+             isOptionalUrl(data, 'imageUrl') &&
+             data.category in ['LOST', 'FOUND'] &&
+             isValidString(data.location, 1, 200) &&
+             isValidString(data.contactInfo, 3, 120) &&
+             isOptionalString(data, 'dateText', 60) &&
+             isValidString(data.reporterUid, 1, 128) &&
+             isOptionalString(data, 'reporterName', 120) &&
+             data.isPublished is bool &&
+             data.status in ['OPEN', 'RESOLVED', 'HIDDEN'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidBloodDonor(data) {
+      return isValidString(data.title, 1, 140) &&
+             isOptionalString(data, 'description', 600) &&
+             data.bloodGroup in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] &&
+             data.category in ['DONOR', 'REQUEST'] &&
+             isValidString(data.location, 1, 160) &&
+             isValidString(data.contactPhone, 5, 30) &&
+             isOptionalString(data, 'availability', 80) &&
+             isValidString(data.userUid, 1, 128) &&
+             data.isPublished is bool &&
+             data.status in ['ACTIVE', 'FULFILLED', 'INACTIVE'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidNotification(data) {
+      return isValidString(data.title, 1, 200) &&
+             isValidString(data.description, 1, 2000) &&
+             isOptionalUrl(data, 'imageUrl') &&
+             isValidString(data.category, 1, 60) &&
+             data.targetAudience in ['ALL', 'STUDENTS', 'FARMERS', 'JOB_SEEKERS', 'BUSINESS_OWNERS', 'WOMEN', 'SENIOR_CITIZENS', 'USER'] &&
+             isOptionalString(data, 'targetUid', 128) &&
+             data.isPublished is bool &&
+             data.status in ['QUEUED', 'SENT', 'DRAFT'] &&
+             isValidString(data.createdBy, 1, 128) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidAppUpdate(data) {
+      return isValidString(data.latestVersion, 1, 40) &&
+             data.versionCode is int &&
+             data.versionCode >= 1 &&
+             data.minSupportedVersion is int &&
+             data.minSupportedVersion >= 1 &&
+             isOptionalString(data, 'releaseNotes', 2000) &&
+             data.forceUpdate is bool &&
+             data.maintenanceMode is bool &&
+             isOptionalString(data, 'maintenanceMessage', 500) &&
+             isOptionalUrl(data, 'updateUrl') &&
+             isValidString(data.updatedBy, 1, 128) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidReport(data) {
+      return isValidString(data.targetCollection, 1, 64) &&
+             isValidId(data.targetId) &&
+             isValidString(data.reason, 1, 200) &&
+             isOptionalString(data, 'details', 1000) &&
+             isValidString(data.reporterUid, 1, 128) &&
+             data.status in ['PENDING', 'REVIEWED', 'RESOLVED', 'DISMISSED'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidAuditLog(data) {
+      return isValidString(data.actorUid, 1, 128) &&
+             isValidString(data.actorEmail, 3, 200) &&
+             isValidString(data.action, 1, 80) &&
+             isValidString(data.module, 1, 80) &&
+             isOptionalString(data, 'targetId', 128) &&
+             isValidString(data.summary, 1, 500) &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    function isValidBusinessReview(data) {
+      return isValidString(data.authorUid, 1, 128) &&
+             isValidString(data.authorName, 1, 120) &&
+             data.rating is int &&
+             data.rating >= 1 &&
+             data.rating <= 5 &&
+             isValidString(data.comment, 1, 1000) &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    function isValidSettingsDoc(data) {
+      return isValidString(data.updatedBy, 1, 128) &&
+             isValidTimestamp(data.updatedAt) &&
+             isOptionalString(data, 'appName', 100) &&
+             isOptionalString(data, 'developerName', 100) &&
+             isOptionalString(data, 'supportEmail', 200) &&
+             isOptionalString(data, 'supportPhone', 30) &&
+             isOptionalString(data, 'privacyPolicy', 8000) &&
+             isOptionalString(data, 'termsConditions', 8000) &&
+             isOptionalUrl(data, 'appLogoUrl');
+    }
+
+    // -------------------------------------------------------------------------
+    // Generic Content Collection Rule Helper
+    // -------------------------------------------------------------------------
+    function allowContentGet(moduleKey) {
+      return isSignedIn() && (existing().isPublished == true || canReadModule(moduleKey));
+    }
+
+    function allowContentList(moduleKey) {
+      return isSignedIn() && (resource.data.isPublished == true || canReadModule(moduleKey));
+    }
+
+    function allowContentCreate(docId, moduleKey) {
+      return isSignedIn() &&
+             isValidId(docId) &&
+             canAddModule(moduleKey) &&
+             isValidContentDoc(incoming()) &&
+             incoming().createdBy == request.auth.uid;
+    }
+
+    function allowContentUpdate(docId, moduleKey) {
+      return isSignedIn() &&
+             isValidId(docId) &&
+             isValidContentDoc(incoming()) &&
+             incoming().createdBy == existing().createdBy &&
+             incoming().createdAt == existing().createdAt &&
+             (
+               canEditModule(moduleKey) ||
+               (canPublishModule(moduleKey) && incoming().diff(existing()).affectedKeys().hasOnly(['isPublished', 'status', 'updatedAt']))
+             );
+    }
+
+    function allowContentDelete(docId, moduleKey) {
+      return isSignedIn() && isValidId(docId) && canDeleteModule(moduleKey);
+    }
+
+    // -------------------------------------------------------------------------
+    // Users Collection (PII Protected, Zero Self-Escalation)
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || canReadModule('users'));
+      allow list: if isSignedIn() && canReadModule('users');
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().uid == request.auth.uid &&
+                       incoming().role == 'USER' &&
+                       incoming().status == 'ACTIVE' &&
+                       incoming().keys().hasAll(['uid', 'name', 'email', 'provider', 'role', 'status', 'district', 'selectedDashboards', 'primaryDashboard', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['uid', 'name', 'email', 'photoUrl', 'provider', 'role', 'status', 'district', 'block', 'village', 'mobile', 'preferredLanguage', 'selectedDashboards', 'primaryDashboard', 'fcmToken', 'createdAt', 'updatedAt']) &&
+                       isValidUser(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidUser(incoming()) &&
+                       incoming().uid == existing().uid &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         (
+                           request.auth.uid == userId &&
+                           existing().status == 'ACTIVE' &&
+                           incoming().email == existing().email &&
+                           incoming().provider == existing().provider &&
+                           incoming().role == existing().role &&
+                           incoming().status == existing().status &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photoUrl', 'village', 'block', 'district', 'mobile', 'preferredLanguage', 'selectedDashboards', 'primaryDashboard', 'fcmToken', 'updatedAt'])
+                         ) ||
+                         (
+                           canEditModule('users') &&
+                           incoming().role == existing().role &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['name', 'village', 'block', 'district', 'mobile', 'preferredLanguage', 'selectedDashboards', 'primaryDashboard', 'status', 'updatedAt'])
+                         )
+                       );
+
+      allow delete: if isSuperAdmin() || (canDeleteModule('users') && userId != request.auth.uid);
+    }
+
+    // -------------------------------------------------------------------------
+    // Admins & Managers (Super Admin Enforced)
+    // -------------------------------------------------------------------------
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isSuperAdmin() && isValidId(adminId) && isValidAdmin(incoming());
+      allow delete: if isSuperAdmin() && isValidId(adminId) && adminId != request.auth.uid;
+    }
+
+    match /managers/{managerId} {
+      allow get: if isSignedIn() && isValidId(managerId) && (request.auth.uid == managerId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isSuperAdmin() && isValidId(managerId) && isValidManager(incoming());
+      allow delete: if isSuperAdmin() && isValidId(managerId);
+    }
+
+    // -------------------------------------------------------------------------
+    // Dashboard Categories
+    // -------------------------------------------------------------------------
+    match /dashboard_categories/{catId} {
+      allow get: if isSignedIn() && isValidId(catId) && (existing().isPublished == true || canReadModule('categories'));
+      allow list: if isSignedIn() && (resource.data.isPublished == true || canReadModule('categories'));
+      allow create: if isSignedIn() && isValidId(catId) && canAddModule('categories') && isValidDashboardCategory(incoming()) && incoming().createdBy == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(catId) && isValidDashboardCategory(incoming()) && incoming().createdBy == existing().createdBy && incoming().createdAt == existing().createdAt && (canEditModule('categories') || (canPublishModule('categories') && incoming().diff(existing()).affectedKeys().hasOnly(['isPublished', 'status', 'updatedAt'])));
+      allow delete: if isSignedIn() && isValidId(catId) && canDeleteModule('categories');
+    }
+
+    // -------------------------------------------------------------------------
+    // Civic Content Modules
+    // -------------------------------------------------------------------------
+    match /news/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('news');
+      allow list: if allowContentList('news');
+      allow create: if allowContentCreate(docId, 'news');
+      allow update: if allowContentUpdate(docId, 'news');
+      allow delete: if allowContentDelete(docId, 'news');
+    }
+
+    match /jobs/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('jobs');
+      allow list: if allowContentList('jobs');
+      allow create: if allowContentCreate(docId, 'jobs');
+      allow update: if allowContentUpdate(docId, 'jobs');
+      allow delete: if allowContentDelete(docId, 'jobs');
+    }
+
+    match /education/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('education');
+      allow list: if allowContentList('education');
+      allow create: if allowContentCreate(docId, 'education');
+      allow update: if allowContentUpdate(docId, 'education');
+      allow delete: if allowContentDelete(docId, 'education');
+    }
+
+    match /scholarships/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('scholarships');
+      allow list: if allowContentList('scholarships');
+      allow create: if allowContentCreate(docId, 'scholarships');
+      allow update: if allowContentUpdate(docId, 'scholarships');
+      allow delete: if allowContentDelete(docId, 'scholarships');
+    }
+
+    match /healthcare/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('healthcare');
+      allow list: if allowContentList('healthcare');
+      allow create: if allowContentCreate(docId, 'healthcare');
+      allow update: if allowContentUpdate(docId, 'healthcare');
+      allow delete: if allowContentDelete(docId, 'healthcare');
+    }
+
+    match /businesses/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('businesses');
+      allow list: if allowContentList('businesses');
+      allow create: if allowContentCreate(docId, 'businesses');
+      allow update: if isSignedIn() && isValidId(docId) && isValidContentDoc(incoming()) && incoming().createdBy == existing().createdBy && incoming().createdAt == existing().createdAt && (
+        canEditModule('businesses') ||
+        (canPublishModule('businesses') && incoming().diff(existing()).affectedKeys().hasOnly(['isPublished', 'status', 'updatedAt'])) ||
+        (existing().isPublished == true && incoming().diff(existing()).affectedKeys().hasOnly(['ratingAvg', 'ratingCount', 'updatedAt']))
+      );
+      allow delete: if allowContentDelete(docId, 'businesses');
+
+      match /reviews/{reviewId} {
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn() && isValidId(reviewId) && isValidBusinessReview(incoming()) && incoming().authorUid == request.auth.uid;
+        allow delete: if isSignedIn() && isValidId(reviewId) && (existing().authorUid == request.auth.uid || canDeleteModule('businesses'));
+      }
+    }
+
+    match /government_schemes/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('schemes');
+      allow list: if allowContentList('schemes');
+      allow create: if allowContentCreate(docId, 'schemes');
+      allow update: if allowContentUpdate(docId, 'schemes');
+      allow delete: if allowContentDelete(docId, 'schemes');
+    }
+
+    match /agriculture/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('agriculture');
+      allow list: if allowContentList('agriculture');
+      allow create: if allowContentCreate(docId, 'agriculture');
+      allow update: if allowContentUpdate(docId, 'agriculture');
+      allow delete: if allowContentDelete(docId, 'agriculture');
+    }
+
+    match /market_prices/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('market_prices');
+      allow list: if allowContentList('market_prices');
+      allow create: if allowContentCreate(docId, 'market_prices');
+      allow update: if allowContentUpdate(docId, 'market_prices');
+      allow delete: if allowContentDelete(docId, 'market_prices');
+    }
+
+    match /transport/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('transport');
+      allow list: if allowContentList('transport');
+      allow create: if allowContentCreate(docId, 'transport');
+      allow update: if allowContentUpdate(docId, 'transport');
+      allow delete: if allowContentDelete(docId, 'transport');
+    }
+
+    match /tourism/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('tourism');
+      allow list: if allowContentList('tourism');
+      allow create: if allowContentCreate(docId, 'tourism');
+      allow update: if allowContentUpdate(docId, 'tourism');
+      allow delete: if allowContentDelete(docId, 'tourism');
+    }
+
+    match /emergency_contacts/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('emergency');
+      allow list: if allowContentList('emergency');
+      allow create: if allowContentCreate(docId, 'emergency');
+      allow update: if allowContentUpdate(docId, 'emergency');
+      allow delete: if allowContentDelete(docId, 'emergency');
+    }
+
+    match /services/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('services');
+      allow list: if allowContentList('services');
+      allow create: if allowContentCreate(docId, 'services');
+      allow update: if allowContentUpdate(docId, 'services');
+      allow delete: if allowContentDelete(docId, 'services');
+    }
+
+    match /announcements/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('announcements');
+      allow list: if allowContentList('announcements');
+      allow create: if allowContentCreate(docId, 'announcements');
+      allow update: if allowContentUpdate(docId, 'announcements');
+      allow delete: if allowContentDelete(docId, 'announcements');
+    }
+
+    match /banners/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('banners');
+      allow list: if allowContentList('banners');
+      allow create: if allowContentCreate(docId, 'banners');
+      allow update: if allowContentUpdate(docId, 'banners');
+      allow delete: if allowContentDelete(docId, 'banners');
+    }
+
+    match /advertisements/{docId} {
+      allow get: if isValidId(docId) && allowContentGet('ads');
+      allow list: if allowContentList('ads');
+      allow create: if allowContentCreate(docId, 'ads');
+      allow update: if allowContentUpdate(docId, 'ads');
+      allow delete: if allowContentDelete(docId, 'ads');
+    }
+
+    // -------------------------------------------------------------------------
+    // Community Posts & Comments
+    // -------------------------------------------------------------------------
+    match /community_posts/{postId} {
+      allow get: if isSignedIn() && isValidId(postId) && ((existing().isPublished == true && existing().status == 'ACTIVE') || existing().authorUid == request.auth.uid || canReadModule('community'));
+      allow list: if isSignedIn() && ((resource.data.isPublished == true && resource.data.status == 'ACTIVE') || resource.data.authorUid == request.auth.uid || canReadModule('community'));
+
+      allow create: if isSignedIn() &&
+                       isValidId(postId) &&
+                       isValidCommunityPost(incoming()) &&
+                       incoming().authorUid == request.auth.uid &&
+                       incoming().status == 'ACTIVE' &&
+                       incoming().likesCount == 0 &&
+                       incoming().commentsCount == 0 &&
+                       incoming().likedBy.size() == 0;
+
+      allow update: if isSignedIn() &&
+                       isValidId(postId) &&
+                       isValidCommunityPost(incoming()) &&
+                       incoming().authorUid == existing().authorUid &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         (
+                           existing().authorUid == request.auth.uid &&
+                           existing().status == 'ACTIVE' &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'imageUrl', 'category', 'block', 'updatedAt'])
+                         ) ||
+                         (
+                           existing().isPublished == true &&
+                           existing().status == 'ACTIVE' &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['likedBy', 'likesCount', 'updatedAt'])
+                         ) ||
+                         (
+                           existing().isPublished == true &&
+                           existing().status == 'ACTIVE' &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['commentsCount', 'updatedAt']) &&
+                           incoming().commentsCount == existing().commentsCount + 1
+                         ) ||
+                         canEditModule('community')
+                       );
+
+      allow delete: if isSignedIn() && isValidId(postId) && (existing().authorUid == request.auth.uid || canDeleteModule('community'));
+    }
+
+    match /community_comments/{commentId} {
+      allow get: if isSignedIn() && isValidId(commentId) && (existing().status == 'ACTIVE' || existing().authorUid == request.auth.uid || canReadModule('community'));
+      allow list: if isSignedIn() && (resource.data.status == 'ACTIVE' || resource.data.authorUid == request.auth.uid || canReadModule('community'));
+
+      allow create: if isSignedIn() &&
+                       isValidId(commentId) &&
+                       isValidCommunityComment(incoming()) &&
+                       incoming().authorUid == request.auth.uid &&
+                       incoming().status == 'ACTIVE' &&
+                       exists(/databases/$(database)/documents/community_posts/$(incoming().postId));
+
+      allow update: if isSignedIn() &&
+                       isValidId(commentId) &&
+                       isValidCommunityComment(incoming()) &&
+                       incoming().postId == existing().postId &&
+                       incoming().authorUid == existing().authorUid &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         (existing().authorUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['text', 'updatedAt'])) ||
+                         canEditModule('community')
+                       );
+
+      allow delete: if isSignedIn() && isValidId(commentId) && (existing().authorUid == request.auth.uid || canDeleteModule('community'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Lost & Found
+    // -------------------------------------------------------------------------
+    match /lost_found/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && (existing().isPublished == true || existing().reporterUid == request.auth.uid || canReadModule('lost_found'));
+      allow list: if isSignedIn() && (resource.data.isPublished == true || resource.data.reporterUid == request.auth.uid || canReadModule('lost_found'));
+
+      allow create: if isSignedIn() &&
+                       isValidId(itemId) &&
+                       isValidLostFound(incoming()) &&
+                       (incoming().reporterUid == request.auth.uid || canAddModule('lost_found'));
+
+      allow update: if isSignedIn() &&
+                       isValidId(itemId) &&
+                       isValidLostFound(incoming()) &&
+                       incoming().reporterUid == existing().reporterUid &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         (existing().reporterUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'imageUrl', 'category', 'location', 'contactInfo', 'dateText', 'status', 'updatedAt'])) ||
+                         canEditModule('lost_found')
+                       );
+
+      allow delete: if isSignedIn() && isValidId(itemId) && (existing().reporterUid == request.auth.uid || canDeleteModule('lost_found'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Blood Donors & Requests
+    // -------------------------------------------------------------------------
+    match /blood_donors/{donorId} {
+      allow get: if isSignedIn() && isValidId(donorId) && (existing().isPublished == true || existing().userUid == request.auth.uid || canReadModule('blood_donors'));
+      allow list: if isSignedIn() && (resource.data.isPublished == true || resource.data.userUid == request.auth.uid || canReadModule('blood_donors'));
+
+      allow create: if isSignedIn() &&
+                       isValidId(donorId) &&
+                       isValidBloodDonor(incoming()) &&
+                       (incoming().userUid == request.auth.uid || canAddModule('blood_donors'));
+
+      allow update: if isSignedIn() &&
+                       isValidId(donorId) &&
+                       isValidBloodDonor(incoming()) &&
+                       incoming().userUid == existing().userUid &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         (existing().userUid == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'bloodGroup', 'category', 'location', 'contactPhone', 'availability', 'status', 'updatedAt'])) ||
+                         canEditModule('blood_donors')
+                       );
+
+      allow delete: if isSignedIn() && isValidId(donorId) && (existing().userUid == request.auth.uid || canDeleteModule('blood_donors'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Notifications, App Updates, Reports, Settings, Audit Logs
+    // -------------------------------------------------------------------------
+    match /notifications/{notifId} {
+      allow get: if isSignedIn() && isValidId(notifId) && (existing().isPublished == true || canReadModule('notifications'));
+      allow list: if isSignedIn() && (resource.data.isPublished == true || canReadModule('notifications'));
+      allow create: if isSignedIn() && isValidId(notifId) && canAddModule('notifications') && isValidNotification(incoming()) && incoming().createdBy == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(notifId) && isValidNotification(incoming()) && incoming().createdBy == existing().createdBy && incoming().createdAt == existing().createdAt && canEditModule('notifications');
+      allow delete: if isSignedIn() && isValidId(notifId) && canDeleteModule('notifications');
+    }
+
+    match /app_updates/{docId} {
+      allow get: if isSignedIn() && isValidId(docId);
+      allow list: if isSignedIn() && (docId == 'current' || canReadModule('app_updates'));
+      allow create, update: if isSignedIn() && isValidId(docId) && canEditModule('app_updates') && isValidAppUpdate(incoming());
+      allow delete: if isSuperAdmin() && isValidId(docId);
+    }
+
+    match /reports/{reportId} {
+      allow get: if isSignedIn() && isValidId(reportId) && (existing().reporterUid == request.auth.uid || canReadModule('reports'));
+      allow list: if isSignedIn() && (resource.data.reporterUid == request.auth.uid || canReadModule('reports'));
+      allow create: if isSignedIn() && isValidId(reportId) && isValidReport(incoming()) && incoming().reporterUid == request.auth.uid && incoming().status == 'PENDING';
+      allow update: if isSignedIn() && isValidId(reportId) && isValidReport(incoming()) && incoming().reporterUid == existing().reporterUid && incoming().createdAt == existing().createdAt && canEditModule('reports');
+      allow delete: if isSignedIn() && isValidId(reportId) && canDeleteModule('reports');
+    }
+
+    match /settings/{docId} {
+      allow get: if isSignedIn() && isValidId(docId) && (docId == 'public' || isSuperAdmin());
+      allow list: if isSuperAdmin();
+      allow create, update: if isSuperAdmin() && isValidId(docId) && isValidSettingsDoc(incoming());
+      allow delete: if isSuperAdmin() && isValidId(docId) && docId != 'public';
+    }
+
+    match /audit_logs/{logId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(logId) && (isAdmin() || isActiveManager()) && isValidAuditLog(incoming()) && incoming().actorUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
