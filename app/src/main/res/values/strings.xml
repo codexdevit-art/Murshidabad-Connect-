@@ -5,6 +5,8 @@
     <string name="sign_in_with_google">Continue with Google</string>
     <string name="error_network">Network error. Please check your connection and try again.</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_firebase_init">Unable to initialize Firebase services. Please check your connection or app configuration and retry.</string>
+    <string name="default_notification_channel_id" translatable="false">murshidabad_alerts</string>
     <string name="cd_app_logo">Murshidabad Connect logo</string>
     <string name="cd_profile_photo">User profile photo</string>
     <string name="cd_banner_image">Banner image</string>

@@ -22,8 +22,9 @@ fun handleFirestoreError(exception: Throwable, operationType: OperationType, pat
         ?: causes.firstOrNull { it !is CancellationException }
         ?: exception
 
-    val auth = FirebaseAuth.getInstance()
-    val currentUser = auth.currentUser
+    val currentUser = runCatching { FirebaseAuth.getInstance().currentUser }
+        .onFailure { Log.w("FirestoreError", "FirebaseAuth unavailable during error logging: ${it.message}") }
+        .getOrNull()
 
     val providerInfoList = currentUser?.providerData?.map { provider ->
         JSONObject().apply {
@@ -48,6 +49,6 @@ fun handleFirestoreError(exception: Throwable, operationType: OperationType, pat
     }
 
     val jsonString = errorInfoJson.toString()
-    Log.e("FirestoreError", "Firestore Error: $jsonString")
+    Log.e("FirestoreError", "Firestore Error: $jsonString", rootError)
     return jsonString
 }

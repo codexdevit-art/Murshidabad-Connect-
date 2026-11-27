@@ -105,14 +105,19 @@ class MurshidabadRepository(
 
     private suspend fun syncFcmTokenQuietly(uid: String) {
         try {
-            val token = FirebaseMessaging.getInstance().token.await()
+            val messaging = FirebaseMessaging.getInstance()
+            runCatching { messaging.subscribeToTopic("all_users").await() }
+            runCatching { messaging.subscribeToTopic("murshidabad_updates").await() }
+            val token = messaging.token.await()
             if (token.isNotBlank()) {
                 db.collection("users").document(uid)
                     .update(mapOf("fcmToken" to token, "updatedAt" to FieldValue.serverTimestamp()))
                     .await()
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            Log.d("MurshidabadRepo", "FCM token sync skipped: ${e.message}")
+            Log.w("MurshidabadRepo", "FCM token sync skipped: ${e.message}", e)
         }
     }
 
@@ -321,7 +326,10 @@ class MurshidabadRepository(
                     snap.toObjects(CommunityComment::class.java, DocumentSnapshot.ServerTimestampBehavior.ESTIMATE)
                         .sortedBy { it.createdAt ?: Timestamp(0, 0) }
                 }
-                .catch { error -> logFlowError(error, path); throw error }
+                .catch { error ->
+                    logFlowError(error, path)
+                    emit(emptyList())
+                }
         )
     }
 
@@ -500,7 +508,10 @@ class MurshidabadRepository(
                     snap.toObjects(BusinessReview::class.java, DocumentSnapshot.ServerTimestampBehavior.ESTIMATE)
                         .sortedByDescending { it.createdAt ?: Timestamp(0, 0) }
                 }
-                .catch { error -> logFlowError(error, path); throw error }
+                .catch { error ->
+                    logFlowError(error, path)
+                    emit(emptyList())
+                }
         )
     }
 

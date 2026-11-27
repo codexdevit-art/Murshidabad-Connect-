@@ -70,7 +70,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.credentials.CredentialManager
 import com.example.data.local.LocalAppStrings
 import com.example.data.model.DashboardCategory
 import com.example.data.model.MurshidabadConstants
@@ -100,7 +99,7 @@ fun AuthScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val credentialManager = remember { CredentialManager.create(context) }
+    val credentialManager = remember(context) { AuthHelper.createCredentialManager(context) }
     val strings = LocalAppStrings.current
 
     var isLoading by remember { mutableStateOf(false) }

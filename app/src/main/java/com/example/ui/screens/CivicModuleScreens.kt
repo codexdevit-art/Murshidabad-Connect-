@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -84,6 +84,7 @@ import com.example.ui.theme.LightGreen
 import com.example.ui.theme.PrimaryGreen
 import com.example.ui.viewmodel.UiState
 import kotlinx.coroutines.flow.Flow
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,7 +217,10 @@ fun CivicModuleScreen(
                                 contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 32.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                items(filtered, key = { it.id }) { item ->
+                                itemsIndexed(
+                                    items = filtered,
+                                    key = { idx, item -> "${moduleKey}_${item.category}_${item.id}_$idx" }
+                                ) { _, item ->
                                     ContentCard(
                                         item = item,
                                         moduleKey = moduleKey,
@@ -303,7 +307,7 @@ private fun ContentCard(
                             Icon(Icons.Rounded.Star, contentDescription = null, tint = AccentAmber, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(3.dp))
                             Text(
-                                "${String.format("%.1f", item.ratingAvg)} (${item.ratingCount})",
+                                "${String.format(Locale.US, "%.1f", item.ratingAvg)} (${item.ratingCount})",
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
@@ -565,7 +569,10 @@ private fun BloodDonorsList(
                     contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 80.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(filtered, key = { it.id }) { donor ->
+                    itemsIndexed(
+                        items = filtered,
+                        key = { idx, donor -> "donor_${donor.id}_$idx" }
+                    ) { _, donor ->
                         Card(shape = RoundedCornerShape(16.dp)) {
                             Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Surface(
